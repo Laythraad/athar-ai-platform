@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ATHAR IRAQ — Explore Iraq's living heritage</title>
+<meta name="description" content="ATHAR IRAQ (Mors Team): explore Iraq's heritage site by site, with sources, a real map, an AI guide and a trip planner. 18 interface languages. Culture & Tourism Hackathon — Iraq 2026." />
+<meta name="theme-color" content="#1c1a17" />
+<script>
+try {
+  var mLang = /[?&]lang=([a-zA-Z-]+)/.exec(location.search || "");
+  if (mLang) {
+    var l0 = mLang[1].toLowerCase();
+    document.documentElement.lang = l0;
+    if (/^(ar|fa|ur|ku|he|ps|sd|yi|ckb)$/.test(l0)) document.documentElement.dir = "rtl";
+  }
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1a17'/%3E%3Cpath d='M16 5l2.6 6.1 6.6.5-5 4.3 1.5 6.4L16 19l-5.7 3.3 1.5-6.4-5-4.3 6.6-.5z' fill='%23b87333'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+<a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="hdr" id="top">
+  <div class="wrap hdr-in">
+    <a class="brand" href="#/home" data-nav="home" aria-label="ATHAR IRAQ">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1c1a17"/><path d="M16 5l2.6 6.1 6.6.5-5 4.3 1.5 6.4L16 19l-5.7 3.3 1.5-6.4-5-4.3 6.6-.5z" fill="#b87333"/></svg>
+      <span class="brand-text"><strong data-i18n="brand">ATHAR</strong><em data-i18n="brand_sub">IRAQ</em></span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Primary">
+      <a href="#/explore" data-nav="explore" data-i18n="nav_explore">Explore</a>
+      <a href="#/map" data-nav="map" data-i18n="nav_map">Map</a>
+      <a href="#/plan" data-nav="plan" data-i18n="nav_plan">Plan a trip</a>
+      <a href="#/learn" data-nav="learn" data-i18n="nav_learn">Learn</a>
+      <a href="#/passport" data-nav="passport" data-i18n="nav_passport">Passport</a>
+      <a href="#/ai" data-nav="ai" data-i18n="nav_ai">AI guide</a>
+      <a href="#/trust" data-nav="trust" data-i18n="nav_trust">Trust</a>
+      <a href="http://localhost:3000" data-miktubati data-i18n="nav_miktubati">MIKTUBATI</a>
+    </nav>
+
+    <div class="hdr-actions">
+      <button class="btn btn-ghost btn-small" id="langBtn" type="button" aria-haspopup="dialog"><span id="langBtnLabel">English</span></button>
+      <a class="btn btn-ghost btn-small hide-mobile" href="#/settings" data-nav="settings" data-i18n="nav_settings">Settings</a>
+      <button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ══════════════ HOME ══════════════ -->
+<section class="view" id="view-home">
+  <div class="hero">
+    <div class="hero-pattern" aria-hidden="true"></div>
+    <div class="wrap hero-in">
+      <div class="hero-copy">
+        <span class="eyebrow">Culture &amp; Tourism Hackathon — Iraq 2026</span>
+        <h1 data-i18n="home_hero_title">Iraq is not just a place you visit, it's a story you live.</h1>
+        <p class="lede" data-i18n="home_hero_sub">Explore Iraq's heritage site by site — every fact carries its source, the AI guide answers from these records, and the map is drawn from real country borders.</p>
+        <div class="hero-cta">
+          <a class="btn btn-gold" href="#/explore" data-nav="explore" data-i18n="home_cta_explore">Explore Iraq</a>
+          <a class="btn btn-ghost" href="#/plan" data-nav="plan" data-i18n="home_cta_plan">Plan my trip</a>
+          <a class="btn btn-ghost" href="#/ai" data-nav="ai" data-i18n="home_cta_ai">Ask the AI guide</a>
+        </div>
+        <ul class="hero-badges">
+          <li data-i18n="home_badge_offline">Runs offline from a single folder</li>
+          <li data-i18n="home_badge_langs">18 interface languages</li>
+          <li data-i18n="home_badge_sources">A source for every place</li>
+        </ul>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="star-pattern"></div>
+        <div class="hero-num">
+          <b id="heroCount">20</b>
+          <span data-i18n="home_stat_sites">places</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="wrap stats-grid">
+      <div class="stat"><b id="statSites">20</b><span data-i18n="home_stat_sites">places</span></div>
+      <div class="stat"><b id="statCountries">8</b><span data-i18n="home_stat_govs">governorates</span></div>
+      <div class="stat"><b id="statLangs">18</b><span data-i18n="home_stat_langs">languages</span></div>
+      <div class="stat"><b id="statSources">—</b><span data-i18n="home_stat_sources">sourced places</span></div>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="wrap">
+      <h2 data-i18n="home_featured">Featured places</h2>
+      <p class="sub" data-i18n="home_featured_sub">A sample from across Iraq's governorates.</p>
+      <div class="cards" id="featuredGrid"></div>
+      <p class="center"><a class="btn btn-ghost" href="#/explore" data-nav="explore" data-i18n="see_all">See all</a></p>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="wrap">
+      <h2 data-i18n="home_govs">Browse by governorate</h2>
+      <p class="sub" data-i18n="home_govs_sub">Iraq first — the world atlas is one toggle away in Explore.</p>
+      <div class="continent-grid" id="continentGrid"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap feature-row">
+      <div class="feature-card">
+        <h3 data-i18n="home_ai_title">An AI guide that cites its sources</h3>
+        <p data-i18n="home_ai_sub">Trip plans, explanations and translations — grounded in the places in this app, and honest when it does not know.</p>
+        <a class="btn btn-gold btn-small" href="#/ai" data-nav="ai" data-i18n="home_ai_cta">Open the AI guide</a>
+      </div>
+      <div class="feature-card">
+        <h3 data-i18n="home_plan_title">Plan a trip that fits your time</h3>
+        <p data-i18n="home_plan_sub">Pick a governorate, a number of days and your interests — get an ordered, realistic plan with travel estimates and sources.</p>
+        <a class="btn btn-gold btn-small" href="#/plan" data-nav="plan" data-i18n="home_plan_cta">Plan a trip</a>
+      </div>
+      <div class="feature-card">
+        <h3 data-i18n="home_trust_title">We would rather say “unverified”</h3>
+        <p data-i18n="home_trust_sub">Coordinate precision, sources and machine-translation labels are shown, never hidden. Hours and fees we don't know are left blank.</p>
+        <a class="btn btn-gold btn-small" href="#/trust" data-nav="trust" data-i18n="home_trust_cta">How we check</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="wrap">
+      <h2 data-i18n="home_how">How it works</h2>
+      <div class="how-grid">
+        <div class="how"><b data-i18n="home_step1">1 · Discover</b><p data-i18n="home_step1_txt">Browse Iraq's sites by governorate, type or interest — or search by name.</p></div>
+        <div class="how"><b data-i18n="home_step2">2 · Learn</b><p data-i18n="home_step2_txt">Open a place, read its story, listen to it, check the source.</p></div>
+        <div class="how"><b data-i18n="home_step3">3 · Go</b><p data-i18n="home_step3_txt">Open it in Google Maps, or build a trip plan day by day.</p></div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- ══════════════ EXPLORE ══════════════ -->
+<section class="view" id="view-explore" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="exp_title">Explore</h1>
+    <p class="sub" id="expSub"></p>
+
+    <div class="filters">
+      <input type="search" id="expSearch" class="input" autocomplete="off" />
+      <div class="filter-row">
+        <label class="field"><span data-i18n="exp_gov">Governorate</span><select id="fGov" class="select"></select></label>
+        <label class="field"><span data-i18n="exp_category">Category</span><select id="fCategory" class="select"></select></label>
+        <label class="field"><span data-i18n="exp_interest">Interest</span><select id="fInterest" class="select"></select></label>
+        <label class="field"><span data-i18n="exp_country">Country</span><select id="fCountry" class="select"></select></label>
+        <label class="field"><span data-i18n="exp_region">Region</span><select id="fRegion" class="select"></select></label>
+        <label class="field"><span data-i18n="exp_sort">Sort</span><select id="fSort" class="select">
+          <option value="rec" data-i18n="exp_sort_rec">Recommended</option>
+          <option value="az" data-i18n="exp_sort_az">Name A–Z</option>
+          <option value="near" data-i18n="exp_sort_near">Closest first</option>
+        </select></label>
+      </div>
+      <div class="filter-actions">
+        <span class="muted" id="expCount"></span>
+        <div class="map-btns">
+          <button class="btn btn-ghost btn-small" id="expWorld" type="button" data-i18n="exp_world">Show world atlas</button>
+          <button class="btn btn-ghost btn-small" id="expView" type="button" data-i18n="exp_view_map">View on map</button>
+          <button class="btn btn-ghost btn-small" id="expClear" type="button" data-i18n="exp_clear">Clear filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cards" id="expGrid"></div>
+    <div class="empty" id="expEmpty" hidden>
+      <p data-i18n="exp_no_results">No places match those filters.</p>
+      <p class="muted" data-i18n="exp_no_results_sub">Try clearing a filter or searching for something shorter.</p>
+      <button class="btn btn-gold btn-small" id="expEmptyClear" type="button" data-i18n="exp_clear">Clear filters</button>
+    </div>
+    <div class="empty" id="expWorldEmpty" hidden>
+      <p data-i18n="exp_world_empty">The world atlas is not loaded in this build.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ DETAIL ══════════════ -->
+<section class="view" id="view-detail" hidden>
+  <div class="wrap section" id="detailBody"></div>
+</section>
+
+<!-- ══════════════ PLAN ══════════════ -->
+<section class="view" id="view-plan" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="plan_title">Plan a trip</h1>
+    <p class="sub" data-i18n="plan_sub">Pick a governorate, your time and interests — get a realistic, sourced plan. Travel times are estimates.</p>
+
+    <div class="set-card">
+      <div class="filter-row">
+        <label class="field"><span data-i18n="plan_gov">Governorate</span><select id="planGov" class="select"></select></label>
+        <label class="field"><span data-i18n="plan_days">Days</span><select id="planDays" class="select">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="7">7</option>
+        </select></label>
+        <label class="field"><span data-i18n="plan_pace">Pace</span><select id="planPace" class="select">
+          <option value="relaxed" data-i18n="plan_pace_relaxed">Relaxed</option>
+          <option value="balanced" selected data-i18n="plan_pace_balanced">Balanced</option>
+          <option value="packed" data-i18n="plan_pace_packed">Packed</option>
+        </select></label>
+      </div>
+      <div class="filter-row" id="planInterests"></div>
+      <div class="filter-actions" style="margin-top:.8rem">
+        <button class="btn btn-gold" id="planGo" type="button" data-i18n="plan_go">Build my trip</button>
+        <button class="btn btn-ghost btn-small" id="planClear" type="button" data-i18n="plan_clear">Clear</button>
+      </div>
+      <p class="muted tiny" data-i18n="plan_null_note">Opening hours and entry fees are not published in our sources for most sites — the plan notes this instead of guessing.</p>
+    </div>
+
+    <div id="planOut"></div>
+  </div>
+</section>
+
+<!-- ══════════════ LEARN ══════════════ -->
+<section class="view" id="view-learn" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="learn_title">Learn & Connect</h1>
+    <p class="sub" data-i18n="learn_sub">Books, magazines, initiatives and gathering places — Iraqi culture beyond the map.</p>
+
+    <h2 data-i18n="learn_books">Books</h2>
+    <p class="sub" data-i18n="learn_books_sub">Foundational works by Iraqi and Iraq-based authors.</p>
+    <div class="learn-grid" id="learnBooks"></div>
+
+    <h2 data-i18n="learn_magazines">Magazines</h2>
+    <p class="sub" data-i18n="learn_magazines_sub">Iraqi cultural and literary periodicals.</p>
+    <div class="learn-grid" id="learnMagazines"></div>
+
+    <h2 data-i18n="learn_initiatives">Initiatives</h2>
+    <p class="sub" data-i18n="learn_initiatives_sub">Iraqi organisations protecting heritage and culture.</p>
+    <div class="learn-grid" id="learnInitiatives"></div>
+
+    <h2 data-i18n="learn_gathering">Gathering places</h2>
+    <p class="sub" data-i18n="learn_gathering_sub">Libraries, museums, book markets and cultural centres.</p>
+    <div class="learn-grid" id="learnGathering"></div>
+  </div>
+</section>
+
+<!-- ══════════════ MAP ══════════════ -->
+<section class="view view-map" id="view-map" hidden>
+  <div class="wrap section map-head">
+    <h1 data-i18n="map_title">World map</h1>
+    <p class="sub" data-i18n="map_sub">Real borders, real coordinates. Tap a marker.</p>
+    <div class="map-toolbar">
+      <span class="muted" id="mapCount"></span>
+      <div class="map-btns">
+        <button class="btn btn-ghost btn-small" id="mapZoomIn" type="button" data-i18n="map_zoom_in">Zoom in</button>
+        <button class="btn btn-ghost btn-small" id="mapZoomOut" type="button" data-i18n="map_zoom_out">Zoom out</button>
+        <button class="btn btn-ghost btn-small" id="mapReset" type="button" data-i18n="map_reset">Reset view</button>
+      </div>
+      <div class="legend">
+        <span><i class="dot dot-exact"></i><span data-i18n="map_marker_exact">Verified / on site</span></span>
+        <span><i class="dot dot-city"></i><span data-i18n="map_marker_city">City-level precision</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="map-stage">
+    <div id="mapCanvas" class="map-canvas" role="img" aria-label="World map with heritage markers"></div>
+    <div class="map-panel" id="mapPanel" hidden></div>
+    <div class="map-hint" data-i18n="map_hint">Scroll to zoom, drag to pan.</div>
+  </div>
+</section>
+
+<!-- ══════════════ PASSPORT ══════════════ -->
+<section class="view" id="view-passport" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="pp_title">Heritage passport</h1>
+    <p class="sub" data-i18n="pp_sub">Progress that teaches, not just scores.</p>
+
+    <div class="pp-hero">
+      <div class="pp-ring"><svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+        <circle cx="60" cy="60" r="52" class="ring-bg"/>
+        <circle cx="60" cy="60" r="52" class="ring-fg" id="ppRing"/>
+      </svg><div class="pp-ring-txt"><b id="ppVisited">0</b><span id="ppOf"></span></div></div>
+      <div class="pp-meta">
+        <p class="pp-level"><span data-i18n="pp_level">Rank</span>: <b id="ppLevel"></b></p>
+        <p class="muted" id="ppPercent"></p>
+        <button class="btn btn-ghost btn-small" id="ppReset" type="button" data-i18n="pp_reset">Reset passport</button>
+      </div>
+    </div>
+
+    <div class="empty" id="ppEmpty">
+      <p data-i18n="pp_empty">Your passport is empty.</p>
+      <p class="muted" data-i18n="pp_empty_sub">Open any place and tap “Mark as visited” to earn your first stamp.</p>
+      <a class="btn btn-gold btn-small" href="#/explore" data-nav="explore" data-i18n="home_cta_explore">Start exploring</a>
+    </div>
+
+    <h2 data-i18n="pp_badges">Badges</h2>
+    <div class="badges" id="ppBadges"></div>
+
+    <h2 data-i18n="pp_quests">Quests</h2>
+    <div class="quests" id="ppQuests"></div>
+
+    <h2 data-i18n="pp_by_continent">By continent</h2>
+    <div class="bars" id="ppByContinent"></div>
+
+    <h2 data-i18n="pp_by_category">By category</h2>
+    <div class="bars" id="ppByCategory"></div>
+  </div>
+</section>
+
+<!-- ══════════════ AI ══════════════ -->
+<section class="view view-ai" id="view-ai" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="ai_title">AI guide</h1>
+    <p class="sub" data-i18n="ai_sub">Answers grounded in this atlas, with sources.</p>
+
+    <div class="ai-shell">
+      <div class="ai-msgs" id="aiMsgs">
+        <div class="ai-empty" id="aiEmpty">
+          <p data-i18n="ai_empty">Ask me anything about the places in this atlas.</p>
+          <p class="muted" data-i18n="ai_empty_sub">I can plan days, compare places, explain history — and I will say when I am unsure.</p>
+        </div>
+      </div>
+      <div class="ai-quicks" id="aiQuicks">
+        <button class="chip" type="button" data-quick="ai_quick_trip" data-i18n="ai_quick_trip">Plan 3 days in Iraq</button>
+        <button class="chip" type="button" data-quick="ai_quick_site" data-i18n="ai_quick_site">Explain Babylon</button>
+        <button class="chip" type="button" data-quick="ai_quick_near" data-i18n="ai_quick_near">What is near the marshes?</button>
+        <button class="chip" type="button" data-quick="ai_quick_family" data-i18n="ai_quick_family">A family trip with children</button>
+      </div>
+      <form class="ai-form" id="aiForm">
+        <label class="sr-only" for="aiInput" data-i18n="ai_ph">Ask about a place, or ask for a trip plan…</label>
+        <textarea id="aiInput" class="input ai-input" rows="2" data-i18n-ph="ai_ph"></textarea>
+        <div class="ai-tools">
+          <label class="btn btn-ghost btn-small file-btn">
+            <span data-i18n="ai_vision">Attach a photo</span>
+            <input type="file" id="aiVision" accept="image/*" hidden />
+          </label>
+          <button class="btn btn-ghost btn-small" id="aiClear" type="button" data-i18n="ai_clear">Clear conversation</button>
+          <button class="btn btn-gold" id="aiSend" type="submit" data-i18n="ai_send">Send</button>
+        </div>
+        <p class="muted tiny" data-i18n="ai_disclaimer">AI answers can be wrong. Check the source link before relying on a fact.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TRUST ══════════════ -->
+<section class="view" id="view-trust" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="tr_title">Trust &amp; method</h1>
+    <p class="sub" data-i18n="tr_sub">What is checked, what is approximate, and what is machine translated.</p>
+
+    <h2 data-i18n="tr_precision_title">Coordinate precision</h2>
+    <div class="trust-grid">
+      <div class="trust-card"><span class="pill pill-exact" data-i18n="d_precision_verified">Verified</span><p data-i18n="tr_precision_verified_d">Coordinates checked against the monument or the property boundary.</p></div>
+      <div class="trust-card"><span class="pill pill-exact" data-i18n="d_precision_site">On site</span><p data-i18n="tr_precision_site_d">Coordinates point at the site itself, accurate to a few tens of metres.</p></div>
+      <div class="trust-card"><span class="pill pill-city" data-i18n="d_precision_city">City centre</span><p data-i18n="tr_precision_city_d">Coordinates point at the city or town; the settlement is certain, the exact spot is not.</p></div>
+    </div>
+
+    <h2 data-i18n="tr_sources_title">Sources</h2>
+    <p class="sub" data-i18n="tr_sources_sub">Every place lists the reference it was built from — UNESCO, official institutions or a recognised reference work.</p>
+    <div class="sources" id="trustSources"></div>
+
+    <h2 data-i18n="tr_method_title">Method</h2>
+    <ol class="method">
+      <li data-i18n="tr_m1">Places are selected for global coverage across six continents, then normalised into one schema.</li>
+      <li data-i18n="tr_m2">Coordinates are stored as WGS84 decimal degrees and labelled with their precision.</li>
+      <li data-i18n="tr_m3">Interface text is written in English and Arabic; the other 16 core languages are translations. Any other language is machine translated and labelled.</li>
+    </ol>
+
+    <h2 data-i18n="tr_ai_title">About the AI guide</h2>
+    <p class="sub" data-i18n="tr_ai_note">The guide receives the place records shown in this app plus your question. It does not have access to anything else about you.</p>
+    <p class="muted" data-i18n="tr_updated">Source links and coordinates were last checked in October 2026.</p>
+  </div>
+</section>
+
+<!-- ══════════════ SETTINGS ══════════════ -->
+<section class="view" id="view-settings" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="st_title">Settings</h1>
+    <p class="sub" data-i18n="st_sub">Language, AI key and local data.</p>
+
+    <div class="set-card">
+      <h2 data-i18n="st_language">Interface language</h2>
+      <p class="muted" data-i18n="st_language_d">18 core languages, plus machine translation into any other.</p>
+      <button class="btn btn-gold btn-small" id="setLangBtn" type="button"><span id="setLangLabel">English</span></button>
+    </div>
+
+    <div class="set-card">
+      <h2 data-i18n="st_translate_title">Translate to any language</h2>
+      <p class="muted" data-i18n="st_translate_d">Type a phrase and translate it with the free translation service. Results are machine translated.</p>
+      <div class="translate-row">
+        <input id="trInput" class="input" data-i18n-ph="st_translate_ph" autocomplete="off" />
+        <select id="trLang" class="select"></select>
+        <button class="btn btn-gold btn-small" id="trGo" type="button" data-i18n="st_translate_go">Translate</button>
+      </div>
+      <div class="translate-out" id="trOut" hidden></div>
+    </div>
+
+    <div class="set-card">
+      <h2 data-i18n="st_ai">AI guide</h2>
+      <p class="muted" data-i18n="st_ai_d">Add your own OpenAI key. It stays on this device.</p>
+      <p class="muted tiny" data-i18n="ai_key_hint">The key is stored in this browser's local storage and is sent only to api.openai.com.</p>
+      <div class="key-row">
+        <input id="keyInput" class="input" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
+        <button class="btn btn-gold btn-small" id="keySave" type="button" data-i18n="ai_key_save">Save key</button>
+        <button class="btn btn-ghost btn-small" id="keyRemove" type="button" data-i18n="ai_key_remove">Remove key</button>
+      </div>
+      <p class="muted" id="keyStatus"></p>
+    </div>
+
+    <div class="set-card">
+      <h2 data-i18n="st_theme">Appearance</h2>
+      <div class="seg" id="themeSeg">
+        <button type="button" data-theme="light" data-i18n="st_theme_light">Light</button>
+        <button type="button" data-theme="dark" data-i18n="st_theme_dark">Dark</button>
+        <button type="button" data-theme="auto" data-i18n="st_theme_auto">Match device</button>
+      </div>
+    </div>
+
+    <div class="set-card">
+      <h2 data-i18n="st_speech">Read aloud</h2>
+      <p class="muted" data-i18n="st_speech_d">Uses your device's built-in voices.</p>
+      <button class="btn btn-ghost btn-small" id="speechTest" type="button" data-i18n="st_speech_test">Test the voice</button>
+    </div>
+
+    <div class="set-card">
+      <h2 data-i18n="st_data">Local data</h2>
+      <p class="muted" data-i18n="st_data_d">Passport stamps and preferences are stored in this browser only.</p>
+      <button class="btn btn-ghost btn-small" id="dataReset" type="button" data-i18n="st_reset">Erase local data</button>
+    </div>
+
+    <div class="set-card">
+      <h2 data-i18n="st_about">About</h2>
+      <p class="muted" data-i18n="st_about_d">ATHAR IRAQ — Culture &amp; Tourism Hackathon, Iraq 2026, by Mors Team. A static website that runs from a folder, with no server and no tracking.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="ftr">
+  <div class="wrap ftr-in">
+    <div>
+      <b data-i18n="brand">ATHAR</b> <span data-i18n="brand_sub">IRAQ</span>
+      <p class="muted" data-i18n="ft_rights">Built by Mors Team for the Culture &amp; Tourism Hackathon — Iraq 2026.</p>
+      <p class="muted" data-i18n="ft_note">No tracking, no cookies, no server. Data lives in this folder. Sources: UNESCO, Wikipedia, Iraq's State Board of Antiquities and Heritage.</p>
+    </div>
+    <nav class="ftr-nav" aria-label="Footer">
+      <a href="#/explore" data-nav="explore" data-i18n="nav_explore">Explore</a>
+      <a href="#/map" data-nav="map" data-i18n="nav_map">Map</a>
+      <a href="#/plan" data-nav="plan" data-i18n="nav_plan">Plan a trip</a>
+      <a href="#/learn" data-nav="learn" data-i18n="nav_learn">Learn</a>
+      <a href="#/passport" data-nav="passport" data-i18n="nav_passport">Passport</a>
+      <a href="#/ai" data-nav="ai" data-i18n="nav_ai">AI guide</a>
+      <a href="#/trust" data-nav="trust" data-i18n="nav_trust">Trust</a>
+      <a href="http://localhost:3000" data-miktubati data-i18n="nav_miktubati">MIKTUBATI</a>
+      <a href="#/settings" data-nav="settings" data-i18n="nav_settings">Settings</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- ══════════════ LANGUAGE MODAL ══════════════ -->
+<div class="modal" id="langModal" hidden role="dialog" aria-modal="true" aria-labelledby="langModalTitle">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="langModalTitle" data-i18n="lang_choose">Choose a language</h2>
+      <button class="btn btn-ghost btn-small" id="langClose" type="button" data-i18n="close">Close</button>
+    </div>
+    <input id="langSearch" class="input" data-i18n-ph="lang_search" autocomplete="off" />
+    <div class="lang-grid" id="langGrid"></div>
+    <p class="muted tiny" id="langMachineNote"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="data/world.js"></script>
+<script src="data/sites-mideast.js"></script>
+<script src="data/sites-africa.js"></script>
+<script src="data/sites-americas.js"></script>
+<script src="data/sites-asia-oceania.js"></script>
+<script src="data/sites-europe-west.js"></script>
+<script src="data/sites-europe-east.js"></script>
+<script src="data/sites-iraq.js"></script>
+<script src="data/learn.js"></script>
+<script src="data/i18n.js"></script>
+<script src="data/i18n-a.js"></script>
+<script src="data/i18n-b.js"></script>
+<script src="data/i18n-c.js"></script>
+<script src="data/i18n-d1.js"></script>
+<script src="data/i18n-d2.js"></script>
+<script src="config.local.js"></script>
+<script src="js/store.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/map.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

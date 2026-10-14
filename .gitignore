@@ -1,0 +1,17 @@
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+/.vscode/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# Secrets — NEVER commit real keys (Supabase, Gemini, OpenAI).
+site/config.local.js
+.env
+.env.*
+!.env.example
