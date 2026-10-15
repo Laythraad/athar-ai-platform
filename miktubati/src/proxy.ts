@@ -36,6 +36,13 @@ function isPublic(pathname: string): boolean {
   if (pathname === "/search" || pathname.startsWith("/search?")) return true;
   if (pathname === "/guidelines") return true;
   if (pathname.startsWith("/author/")) return true;
+  // ── ATHAR AI expansion — explorable before signup ──
+  if (pathname === "/ai" || pathname.startsWith("/ai?")) return true;
+  if (pathname === "/nearby") return true;
+  if (pathname === "/travel" || pathname.startsWith("/travel/")) return true;
+  if (pathname === "/safety") return true;
+  if (pathname === "/kids" || pathname.startsWith("/kids/")) return true;
+  if (pathname === "/studio") return true;
   return false;
 }
 

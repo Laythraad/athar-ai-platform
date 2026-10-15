@@ -83,10 +83,45 @@ export default async function HomePage({
             <span className="qg-title">{t(lang, "home_q2")}</span>
             <span className="qg-sub">{t(lang, "home_q2_sub")}</span>
           </Link>
-          <Link href="/#ask" className="qg-card">
-            <span className="qg-icon" aria-hidden="true">💬</span>
-            <span className="qg-title">{t(lang, "home_q3")}</span>
-            <span className="qg-sub">{t(lang, "home_q3_sub")}</span>
+          <Link href="/ai" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🤖</span>
+            <span className="qg-title">{t(lang, "nav_ai")}</span>
+            <span className="qg-sub">{t(lang, "ai_sub")}</span>
+          </Link>
+          <Link href="/my-library" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🔒</span>
+            <span className="qg-title">{t(lang, "nav_mylib")}</span>
+            <span className="qg-sub">{t(lang, "lib_sub")}</span>
+          </Link>
+          <Link href="/nearby" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">📍</span>
+            <span className="qg-title">{t(lang, "nav_nearby")}</span>
+            <span className="qg-sub">{t(lang, "near_sub")}</span>
+          </Link>
+          <Link href="/travel" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🧳</span>
+            <span className="qg-title">{t(lang, "nav_travel")}</span>
+            <span className="qg-sub">{t(lang, "travel_sub")}</span>
+          </Link>
+          <Link href="/safety" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🆘</span>
+            <span className="qg-title">{t(lang, "nav_safety")}</span>
+            <span className="qg-sub">{t(lang, "safety_sub")}</span>
+          </Link>
+          <Link href="/studio" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🎨</span>
+            <span className="qg-title">{t(lang, "nav_studio")}</span>
+            <span className="qg-sub">{t(lang, "studio_sub")}</span>
+          </Link>
+          <Link href="/kids" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🧒</span>
+            <span className="qg-title">{t(lang, "nav_kids")}</span>
+            <span className="qg-sub">{t(lang, "kids_sub")}</span>
+          </Link>
+          <Link href="/passport" className="qg-card">
+            <span className="qg-icon" aria-hidden="true">🛂</span>
+            <span className="qg-title">{t(lang, "nav_passport")}</span>
+            <span className="qg-sub">{t(lang, "passport_sub")}</span>
           </Link>
         </div>
       </section>

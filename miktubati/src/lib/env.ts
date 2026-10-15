@@ -18,6 +18,10 @@ export interface DbEnv {
   geminiModel: string;
   siteUrl: string;
   atharUrl: string;
+  searchProvider: string;
+  tavilyApiKey: string;
+  braveApiKey: string;
+  serperApiKey: string;
 }
 
 function trim(v: string | undefined): string {
@@ -36,6 +40,11 @@ export function readDbEnv(): DbEnv {
     geminiModel: trim(process.env.GEMINI_MODEL) || "gemini-flash-lite-latest",
     siteUrl: trim(process.env.NEXT_PUBLIC_SITE_URL) || "http://localhost:3000",
     atharUrl: trim(process.env.NEXT_PUBLIC_ATHAR_URL) || "../site/index.html",
+    // ATHAR Web Intelligence — server-only search provider keys
+    searchProvider: trim(process.env.SEARCH_PROVIDER).toLowerCase(),
+    tavilyApiKey: trim(process.env.TAVILY_API_KEY),
+    braveApiKey: trim(process.env.BRAVE_API_KEY),
+    serperApiKey: trim(process.env.SERPER_API_KEY),
   };
 }
 

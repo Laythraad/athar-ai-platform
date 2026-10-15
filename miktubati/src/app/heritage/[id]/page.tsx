@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { t, bl, herCatLabel, herPrecisionLabel } from "@/lib/i18n";
 import { getCurrentLang } from "@/lib/lang";
 import { IRAQ_SITES } from "@/lib/heritage/data";
+import { cultureForGovernorate } from "@/lib/travel/culture";
+import AddToTripButton from "@/components/AddToTripButton";
 
 export const instant = false;
 
@@ -39,6 +41,8 @@ export default async function HeritageDetail({
     .slice(0, 5);
 
   const mapsUrl = `https://www.google.com/maps?q=${site.lat},${site.lng}`;
+  const culture = cultureForGovernorate(site.governorate.en);
+  const askAiUrl = `/ai?q=${encodeURIComponent(site.name.en + " " + site.name.ar)}`;
 
   return (
     <div className="stack" style={{ maxWidth: "900px" }}>
@@ -68,10 +72,23 @@ export default async function HeritageDetail({
         <span className="tiny">{t(lang, "her_no_photo")}</span>
       </div>
 
-      <div className="row">
+      <div className="row" style={{ flexWrap: "wrap" }}>
         <a className="btn btn-primary btn-sm" href={mapsUrl} target="_blank" rel="noopener noreferrer">
           {t(lang, "her_open_maps")}
         </a>
+        <AddToTripButton
+          lang={lang}
+          stop={{
+            id: site.id,
+            name: bl(lang, site.name),
+            gov: bl(lang, site.governorate),
+            lat: site.lat,
+            lng: site.lng,
+          }}
+        />
+        <Link href={askAiUrl} className="btn btn-ghost btn-sm">
+          {t(lang, "her_ask_ai")}
+        </Link>
       </div>
 
       <div className="detail-grid">
@@ -93,6 +110,33 @@ export default async function HeritageDetail({
         </div>
 
         <div>
+          {/* Cultural guide — "know before you go" (guidance, not law). */}
+          {culture && (
+            <div className="side-card">
+              <h3>{t(lang, "culture_title")}</h3>
+              <div className="kv">
+                <span>{t(lang, "culture_dress")}</span>
+                <span>{bl(lang, culture.dress)}</span>
+              </div>
+              <div className="kv">
+                <span>{t(lang, "culture_photo")}</span>
+                <span>{bl(lang, culture.photo)}</span>
+              </div>
+              <div className="kv">
+                <span>{t(lang, "culture_greetings")}</span>
+                <span>{bl(lang, culture.greetings)}</span>
+              </div>
+              <div className="kv">
+                <span>{t(lang, "culture_markets")}</span>
+                <span>{bl(lang, culture.markets)}</span>
+              </div>
+              <div className="kv">
+                <span>{t(lang, "culture_law_note")}</span>
+                <span>{bl(lang, culture.lawNote)}</span>
+              </div>
+            </div>
+          )}
+
           {/* Tourism-facing quick plan: only facts we actually have — never
               invented fees or opening hours. */}
           <div className="side-card">

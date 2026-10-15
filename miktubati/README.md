@@ -11,6 +11,32 @@ and is a separate, self-contained demo.
 
 ---
 
+## ATHAR AI platform (2026 expansion)
+
+The app is now the full **ATHAR AI** platform (team Mors): culture, travel,
+books, arts, education, kids and web-connected AI under one experience.
+
+| Section | Route | What works |
+|---|---|---|
+| ATHAR AI assistant | `/ai` | unified chat grounded on the heritage dataset + optional live web search with real source links |
+| My Library | `/my-library` | private PDF/text/image upload (25 MB cap, magic-byte checks), pdf.js reader, notes, last-page save, **My Library AI** (summarize/ideas/quiz/terms/ask from your own files) |
+| Nearby | `/nearby` | explicit-permission geolocation (never uploaded), manual-city fallback, distance ranking, Maps links |
+| Travel | `/travel` | hub + airports directory (sourced data only — no invented flights) + My Trip planner |
+| Safety | `/safety` | verified emergency numbers per country with sources + verification dates; the assistant never claims to dispatch help |
+| Creative Studio | `/studio` | private poem/story/note drafts + AI ideas/edit tips |
+| ATHAR Kids | `/kids` | curated bilingual stories & quizzes; strict kids AI that refuses PII/off-topic |
+| Cultural Passport | `/passport` | visited-site log with badges |
+| Cultural guide | heritage pages | "know before you go" dress/photo/greetings/markets notes per governorate |
+
+Feature-by-feature status, honest limitations and external costs:
+[`docs/FEATURES_STATUS.md`](docs/FEATURES_STATUS.md).
+
+Web search needs one provider key in `.env.local`
+(`TAVILY_API_KEY` or `BRAVE_API_KEY` or `SERPER_API_KEY`) — without it the
+assistant says so honestly and answers from the internal dataset only.
+
+---
+
 ## What this is
 
 | | |

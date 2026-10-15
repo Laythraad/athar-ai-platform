@@ -54,9 +54,25 @@ export default function NavMenu({
     { href: "/heritage/map", icon: "🗺️", label: t(lang, "her_map_title") },
     { href: "/search", icon: "🔍", label: t(lang, "search_title") },
   ];
+  const assistant: Item[] = [
+    { href: "/ai", icon: "🤖", label: t(lang, "nav_ai") },
+    { href: "/nearby", icon: "📍", label: t(lang, "nav_nearby") },
+  ];
   const read: Item[] = [
     { href: "/library", icon: "📚", label: t(lang, "nav_library") },
+    { href: "/my-library", icon: "🔒", label: t(lang, "nav_mylib") },
     { href: "/guidelines", icon: "📜", label: t(lang, "nav_guidelines") },
+  ];
+  const travel: Item[] = [
+    { href: "/travel", icon: "🧳", label: t(lang, "nav_travel") },
+    { href: "/travel/airports", icon: "✈️", label: t(lang, "travel_airports") },
+    { href: "/travel/trip", icon: "🗺️", label: t(lang, "travel_mytrip") },
+    { href: "/safety", icon: "🆘", label: t(lang, "nav_safety") },
+  ];
+  const create: Item[] = [
+    { href: "/studio", icon: "🎨", label: t(lang, "nav_studio") },
+    { href: "/kids", icon: "🧒", label: t(lang, "nav_kids") },
+    { href: "/passport", icon: "🛂", label: t(lang, "nav_passport") },
   ];
   const write: Item[] = [];
   if (!pending && canPublish) {
@@ -73,7 +89,10 @@ export default function NavMenu({
 
   const sections: Section[] = [
     { title: t(lang, "nav_sec_explore"), items: explore },
+    { title: t(lang, "nav_sec_ai"), items: assistant },
     { title: t(lang, "nav_sec_read"), items: read },
+    { title: t(lang, "nav_sec_travel"), items: travel },
+    { title: t(lang, "nav_sec_tools"), items: create },
     ...(write.length ? [{ title: t(lang, "nav_sec_write"), items: write }] : []),
     ...(account.length ? [{ title: t(lang, "nav_sec_account"), items: account }] : []),
   ];
