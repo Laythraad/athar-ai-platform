@@ -3,6 +3,7 @@ import { type NextRequest } from "next/server";
 import { requireUser, audit, err, ok } from "@/lib/server/api";
 import { adminSupabase } from "@/lib/supabase/admin";
 import { ALLOWED_FILE_MIME, MAX_FILE_BYTES } from "@/lib/validation/work";
+import { checkRateLimit, RATE_RULES } from "@/lib/ratings";
 
 /* POST /api/upload   (multipart/form-data, field name: `file`)
 
@@ -27,6 +28,10 @@ export async function POST(request: NextRequest) {
   const auth = await requireUser();
   if (auth.error) return auth.error;
   const userId = auth.session.userId!;
+
+  // Same budget as publish — upload is the first half of that expensive flow.
+  const rl = checkRateLimit(userId, RATE_RULES.publish);
+  if (!rl.allowed) return err(429, "rate_limited");
 
   const admin = adminSupabase();
   if (!admin) return err(503, "service_role_not_configured");

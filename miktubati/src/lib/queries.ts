@@ -6,6 +6,13 @@
 
 import { serverSupabase } from "./supabase/server";
 
+/** Escape PostgREST/PostgreSQL ILIKE special characters in a user-supplied
+    search term so `%`, `_`, `\`, `,`, `(`, `)`, and `.` inside the term cannot
+    break out of the pattern or inject extra OR clauses. */
+export function escapeIlike(term: string): string {
+  return term.replace(/[\\%_,().*+?^${}[\]|/]/g, (m) => `\\${m}`);
+}
+
 export interface WorkRow {
   id: string;
   author_id: string;
@@ -70,7 +77,7 @@ export async function fetchPublishedWorks(opts: FeedOptions = {}): Promise<WorkR
     query = query.eq("category", opts.category);
   }
   if (opts.q && opts.q.trim()) {
-    const term = opts.q.trim();
+    const term = escapeIlike(opts.q.trim());
     // title + description + body (the body includes text extracted from
     // uploaded PDFs, so file works stay searchable)
     query = query.or(
@@ -79,14 +86,24 @@ export async function fetchPublishedWorks(opts: FeedOptions = {}): Promise<WorkR
   }
 
   if (opts.sort === "top") {
-    query = query.order("avg_rating", { ascending: false, nullsFirst: false });
+    // `works.avg_rating` is a dead column (the protect trigger forces it to 0
+    // on insert and there are no per-work ratings — only per-author). Sort by
+    // read_count as an honest popularity proxy instead.
+    query = query.order("read_count", { ascending: false, nullsFirst: false });
   } else if (opts.sort === "read") {
     query = query.order("read_count", { ascending: false, nullsFirst: false });
   } else {
     query = query.order("published_at", { ascending: false, nullsFirst: false });
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) {
+    // Don't silently swallow query failures — log so a bad filter or a
+    // schema drift is visible in server logs instead of looking like an
+    // empty library.
+    console.error("[queries] fetchPublishedWorks failed:", error.message);
+    return [];
+  }
   const rows = (data as unknown as Array<WorkRow & { profiles: { pen_name: string } | null }>) ?? [];
   /* flatten the join so WorkCard sees `pen_name` */
   return rows.map(({ profiles, ...w }) => ({
@@ -98,47 +115,63 @@ export async function fetchPublishedWorks(opts: FeedOptions = {}): Promise<WorkR
 export async function fetchWork(id: string): Promise<WorkRow | null> {
   const supabase = await serverSupabase();
   if (!supabase) return null;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("works")
     .select(WORK_SELECT)
     .eq("id", id)
     .maybeSingle();
+  if (error) {
+    console.error("[queries] fetchWork failed:", error.message);
+    return null;
+  }
   return (data as WorkRow | null) ?? null;
 }
 
 export async function fetchAuthorWorks(authorId: string): Promise<WorkRow[]> {
   const supabase = await serverSupabase();
   if (!supabase) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("works")
     .select(WORK_SELECT)
     .eq("author_id", authorId)
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(60);
+  if (error) {
+    console.error("[queries] fetchAuthorWorks failed:", error.message);
+    return [];
+  }
   return (data as WorkRow[]) ?? [];
 }
 
 export async function fetchAuthor(id: string): Promise<AuthorRow | null> {
   const supabase = await serverSupabase();
   if (!supabase) return null;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("id, pen_name, bio, avatar_path, author_type, account_status, created_at")
     .eq("id", id)
     .maybeSingle();
+  if (error) {
+    console.error("[queries] fetchAuthor failed:", error.message);
+    return null;
+  }
   return (data as AuthorRow | null) ?? null;
 }
 
 export async function fetchMyWorks(userId: string): Promise<WorkRow[]> {
   const supabase = await serverSupabase();
   if (!supabase) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("works")
     .select(WORK_SELECT)
     .eq("author_id", userId)
     .order("created_at", { ascending: false })
     .limit(100);
+  if (error) {
+    console.error("[queries] fetchMyWorks failed:", error.message);
+    return [];
+  }
   return (data as WorkRow[]) ?? [];
 }
 
@@ -152,10 +185,14 @@ export interface CategoryRow {
 export async function fetchCategories(): Promise<CategoryRow[]> {
   const supabase = await serverSupabase();
   if (!supabase) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .select("slug, name_ar, name_en, sort")
     .order("sort", { ascending: true });
+  if (error) {
+    console.error("[queries] fetchCategories failed:", error.message);
+    return [];
+  }
   return (data as CategoryRow[]) ?? [];
 }
 
@@ -168,12 +205,16 @@ export interface ReadingListRow {
 export async function fetchReadingList(userId: string): Promise<ReadingListRow[]> {
   const supabase = await serverSupabase();
   if (!supabase) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("reading_list")
     .select(`work_id, status, works (${WORK_SELECT})`)
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(100);
+  if (error) {
+    console.error("[queries] fetchReadingList failed:", error.message);
+    return [];
+  }
 
   // PostgREST returns an embedded to-one relation as a 1-element array.
   const rows = (data ?? []) as unknown as {
@@ -195,21 +236,27 @@ export async function fetchAuthorRating(
   const supabase = await serverSupabase();
   if (!supabase) return { avg: 0, count: 0, mine: null };
 
-  const { data: agg } = await supabase
+  const { data: agg, error: aggErr } = await supabase
     .from("author_rating_agg")
     .select("avg_stars, count")
     .eq("author_id", authorId)
     .maybeSingle();
+  if (aggErr) {
+    console.error("[queries] fetchAuthorRating agg failed:", aggErr.message);
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   let mine: number | null = null;
   if (user) {
-    const { data: r } = await supabase
+    const { data: r, error: rErr } = await supabase
       .from("author_ratings")
       .select("stars")
       .eq("author_id", authorId)
       .eq("rater_id", user.id)
       .maybeSingle();
+    if (rErr) {
+      console.error("[queries] fetchAuthorRating mine failed:", rErr.message);
+    }
     mine = typeof r?.stars === "number" ? r.stars : null;
   }
 

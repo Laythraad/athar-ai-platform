@@ -5,10 +5,14 @@ window.App = (function () {
   var filters = { q: "", gov: "", interest: "", country: "", category: "", region: "", sort: "rec", world: false };
   var planState = { gov: "", days: 3, pace: "balanced", interests: {} };
   var aiHistory = [];
+  var aiMsgSeq = 0;
+  var aiEmptyNode = null;
   var mapView = null;
   var mapReady = false;
   var speechVoices = [];
   var lastPlan = null;
+  var filtersUiBuilt = false;
+  var planUiBuilt = false;
 
   /* ---------- helpers ---------- */
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -96,6 +100,7 @@ window.App = (function () {
       case "detail": $("#view-detail").hidden = false; renderDetail(r.arg); break;
       case "map": $("#view-map").hidden = false; renderMap(r.arg); break;
       case "plan": $("#view-plan").hidden = false; renderPlan(); break;
+      case "space": $("#view-space").hidden = false; renderSpace(); break;
       case "learn": $("#view-learn").hidden = false; renderLearn(); break;
       case "passport": $("#view-passport").hidden = false; renderPassport(); break;
       case "ai": $("#view-ai").hidden = false; break;
@@ -158,7 +163,8 @@ window.App = (function () {
 
   function ensureFiltersUI() {
     var gSel = $("#fGov");
-    if (gSel.options.length <= 1) {
+    if (!filtersUiBuilt || gSel.options.length <= 1) {
+      filtersUiBuilt = true;
       fillSelect(gSel, uniqueGovs(IQ).map(function (g) { return { v: g.en, l: g.label }; }), t("exp_all"), filters.gov);
       var countries = {}, regions = {}, cats = {};
       SITES.forEach(function (s) {
@@ -214,6 +220,15 @@ window.App = (function () {
 
   var userPos = null;
 
+  function ensureUserPos() {
+    if (userPos) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      if (filters.sort === "near") renderExplore();
+    }, null, { maximumAge: 300000, timeout: 8000 });
+  }
+
   function renderExplore() {
     ensureFiltersUI();
     var poolN = filters.world ? SITES.length : IQ.length;
@@ -261,7 +276,7 @@ window.App = (function () {
     var tags = (s.tags || []).map(function (x) { return '<span class="pill">' + esc(x) + "</span>"; }).join(" ");
     var src = s.source && s.source.url
       ? '<a href="' + esc(s.source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.source.title || t("d_source")) + "</a><br><span class='muted tiny'>" + esc(s.source.publisher || "") + " · " + esc(s.source.checked || "") + "</span>"
-      : '<span class="muted">' + esc(t("tr_precision_city_d")) + "</span>";
+      : '<span class="muted">' + esc(t("learn_no_source")) + "</span>";
     var related = relatedOf(s);
 
     body.innerHTML =
@@ -351,7 +366,8 @@ window.App = (function () {
 
   function renderPlan() {
     var gSel = $("#planGov");
-    if (gSel.options.length <= 1) {
+    if (!planUiBuilt || gSel.options.length <= 1) {
+      planUiBuilt = true;
       fillSelect(gSel, uniqueGovs(IQ).map(function (g) { return { v: g.en, l: g.label }; }), t("exp_all"), planState.gov);
       var cats = {};
       IQ.forEach(function (s) { cats[s.cat] = 1; });
@@ -369,6 +385,43 @@ window.App = (function () {
     gSel.value = planState.gov;
     $("#planDays").value = String(planState.days);
     $("#planPace").value = planState.pace;
+    renderTripList();
+  }
+
+  function renderTripList() {
+    var el = $("#planTrip");
+    if (!el) return;
+    var ids = window.Store.trip.ids();
+    if (!ids.length) {
+      el.innerHTML = '<p class="muted tiny">' + esc(t("plan_no_trip")) + "</p>";
+      return;
+    }
+    var items = ids.map(byId).filter(Boolean);
+    var html = "<h3>" + esc(t("plan_trip_title", { n: items.length })) + "</h3>";
+    html += '<div class="nearby-list">';
+    items.forEach(function (s) {
+      html += '<div class="quest"><div><b>' + esc(siteName(s)) + "</b>" +
+        (s.governorate ? " · " + esc(siteGov(s)) : "") +
+        '<br><span class="muted tiny">' + s.visit + " " + esc(t("d_min")) + "</span></div>" +
+        '<button class="btn btn-ghost btn-small" type="button" data-trip-rm="' + esc(s.id) + '">' + esc(t("d_remove")) + "</button></div>";
+    });
+    html += "</div>";
+    html += '<button class="btn btn-ghost btn-small" id="tripClear" type="button" style="margin-top:.5rem">' + esc(t("plan_trip_clear")) + "</button>";
+    el.innerHTML = html;
+    $$("#planTrip [data-trip-rm]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        window.Store.trip.remove(b.getAttribute("data-trip-rm"));
+        renderTripList();
+      });
+    });
+    var clearBtn = $("#tripClear");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        window.Store.trip.clear();
+        renderTripList();
+        toast(t("toast_reset"));
+      });
+    }
   }
 
   function buildPlan() {
@@ -399,7 +452,7 @@ window.App = (function () {
     var dayList = [];
     var cur = [], used = 0, prev = null;
     while (remaining.length && dayList.length < days) {
-      var bestI = -1, bestScore = -1;
+      var bestI = -1, bestScore = -Infinity;
       for (var i = 0; i < remaining.length; i++) {
         var cand = remaining[i];
         var travel = prev ? travelMinutes(haversine(prev.lat, prev.lng, cand.lat, cand.lng)) : 0;
@@ -407,8 +460,8 @@ window.App = (function () {
         var fits = total <= budget + 60;
         var score = (fits ? 100 : 0) + (prev ? -haversine(prev.lat, prev.lng, cand.lat, cand.lng) : cand.visit);
         if (score > bestScore) { bestScore = score; bestI = i; }
-        if (fits && (!prev || haversine(prev.lat, prev.lng, cand.lat, cand.lng) < haversine(prev.lat, prev.lng, remaining[bestI].lat, remaining[bestI].lng))) bestI = i;
       }
+      if (bestI === -1) break;
       var pickSite = remaining.splice(bestI, 1)[0];
       var tr = prev ? travelMinutes(haversine(prev.lat, prev.lng, pickSite.lat, pickSite.lng)) : 0;
       if (cur.length && used + tr + pickSite.visit > budget + 60) {
@@ -455,11 +508,80 @@ window.App = (function () {
     $$("#planOut [data-trip]").forEach(function (b) {
       b.addEventListener("click", function () {
         window.Store.trip.add(b.getAttribute("data-trip"));
-        toast(t("toast_copied"));
+        toast(t("toast_trip_added"));
         b.textContent = t("d_add_trip") + " ✓";
       });
     });
     lastPlan = dayList;
+  }
+
+  /* ---------- space ---------- */
+  var SPACE_SITES = null;
+  function getSpaceSites() {
+    if (!SPACE_SITES) {
+      SPACE_SITES = (window.SITES || []).filter(function (s) {
+        return s.cat === "space" || s.cat === "science" ||
+               (s.tags && s.tags.some(function (t) {
+                return /astronomy|space|telescope|observatory|rocket|NASA|ESA|launch/i.test(t);
+               }));
+      });
+    }
+    return SPACE_SITES;
+  }
+
+  function spaceCard(s) {
+    var catBadge = s.cat === "space" ? t("cat_space") : catLabel(s.cat);
+    return '<a class="card" href="#/detail/' + encodeURIComponent(s.id) + '">' +
+      '<div class="card-top"><span class="cat">' + esc(catBadge) + "</span>" +
+      '<span class="pill">' + esc(s.country ? siteCountry(s) : "") + "</span></div>" +
+      "<h3>" + esc(siteName(s)) + "</h3>" +
+      '<span class="country">' + esc(siteCity(s) || siteGov(s) || "") + "</span>" +
+      '<p class="sum">' + esc(siteSummary(s)) + "</p>" +
+      '<div class="card-foot"><span>' + s.visit + " " + t("d_min") + "</span>" +
+      (s.source && s.source.url ? "<span>" + esc(s.source.publisher || t("d_source")) + "</span>" : "") +
+      "</div></a>";
+  }
+
+  function renderSpace() {
+    var sites = getSpaceSites();
+    var q = ($("#spaceQ") && $("#spaceQ").value || "").trim().toLowerCase();
+    var cat = $("#spaceCat") ? $("#spaceCat").value : "";
+    var sort = $("#spaceSort") ? $("#spaceSort").value : "az";
+
+    var out = sites.filter(function (s) {
+      if (cat && s.cat !== cat && !(cat === "observatory" && s.tags && s.tags.some(function (t) { return /observatory/i.test(t); }))) return false;
+      if (!q) return true;
+      var hay = [siteName(s), siteCountry(s), siteCity(s), siteSummary(s), (s.tags || []).join(" ")].join(" ").toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+
+    if (sort === "visit") out.sort(function (a, b) { return b.visit - a.visit; });
+    else if (sort === "near") {
+      if (!userPos && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          renderSpace();
+        }, function () { /* denied */ }, { timeout: 5000, maximumAge: 60000 });
+      }
+      if (userPos) out.sort(function (a, b) {
+        return haversine(userPos.lat, userPos.lng, a.lat, a.lng) - haversine(userPos.lat, userPos.lng, b.lat, b.lng);
+      });
+      else out.sort(function (a, b) { return siteName(a).localeCompare(siteName(b)); });
+    }
+    else out.sort(function (a, b) { return siteName(a).localeCompare(siteName(b)); });
+
+    $("#spaceGrid").innerHTML = out.map(spaceCard).join("");
+    $("#spaceEmpty").hidden = out.length > 0;
+    $("#spaceGrid").hidden = out.length === 0;
+
+    // Wire filter events once
+    if (!renderSpace._wired) {
+      ["spaceQ", "spaceCat", "spaceSort"].forEach(function (id) {
+        var el = $("#" + id);
+        if (el) el.addEventListener("input", renderSpace);
+      });
+      renderSpace._wired = true;
+    }
   }
 
   /* ---------- learn ---------- */
@@ -535,6 +657,9 @@ window.App = (function () {
     { id: "museum", name: "badge_museum", desc: "badge_museum_d", test: function (v) { return v.filter(function (s) { return s.cat === "museum"; }).length >= 3; } },
     { id: "food", name: "badge_food", desc: "badge_food_d", test: function (v) { return v.filter(function (s) { return s.cat === "food" || s.cat === "market"; }).length >= 3; } },
     { id: "allcats", name: "badge_allcats", desc: "badge_allcats_d", test: function (v) { return countBy(v, function (s) { return s.cat; }) >= 6; } },
+    { id: "spacefirst", name: "space_badge_first", desc: "space_badge_first_d", test: function (v) { return v.some(function (s) { return s.cat === "space" || s.cat === "science"; }); } },
+    { id: "stargazer", name: "space_badge_obs", desc: "space_badge_obs_d", test: function (v) { return v.filter(function (s) { return s.tags && s.tags.some(function (t) { return /observatory/i.test(t); }); }).length >= 3; } },
+    { id: "tothestars", name: "space_badge_launch", desc: "space_badge_launch_d", test: function (v) { return v.some(function (s) { return s.tags && s.tags.some(function (t) { return /launch site/i.test(t); }); }); } },
     { id: "half", name: "badge_half", desc: "badge_half_d", test: function (v) { return v.length * 2 >= SITES.length; } }
   ];
 
@@ -593,7 +718,7 @@ window.App = (function () {
       if (!all.length) return;
       byCont[contLabel(c)] = [v.filter(function (s) { return s.continent === c; }).length, all.length];
     });
-    ["archaeology", "heritage", "museum", "nature", "religious", "landmark", "food", "market", "craft"].forEach(function (c) {
+    ["archaeology", "heritage", "museum", "nature", "religious", "landmark", "food", "market", "craft", "science", "space"].forEach(function (c) {
       var all = SITES.filter(function (s) { return s.cat === c; });
       if (!all.length) return;
       byCat[catLabel(c)] = [v.filter(function (s) { return s.cat === c; }).length, all.length];
@@ -629,19 +754,41 @@ window.App = (function () {
     var src = "";
     if (m.sources && m.sources.length) {
       src = '<span class="src">' + esc(t("ai_sources")) + ": " + m.sources.map(function (x) {
-        return x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.title || x.url) + "</a>" : esc(x.title || "");
+        if (x.url && /^https?:\/\//i.test(x.url)) {
+          return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.title || x.url) + "</a>";
+        }
+        return esc(x.title || "");
       }).join(" · ") + "</span>";
     }
     if (m.confidence) src += '<span class="src">' + esc(t("ai_confidence")) + ": " + esc(m.confidence) + "</span>";
     return '<div class="msg bot">' + esc(m.content) + src + "</div>";
   }
 
+  function ensureAiEmptyNode() {
+    if (aiEmptyNode && document.body.contains(aiEmptyNode)) return aiEmptyNode;
+    aiEmptyNode = document.createElement("div");
+    aiEmptyNode.id = "aiEmpty";
+    aiEmptyNode.className = "empty";
+    aiEmptyNode.innerHTML = '<p>' + esc(t("ai_empty")) + "</p><p class='muted tiny'>" + esc(t("ai_empty_sub")) + "</p>";
+    return aiEmptyNode;
+  }
+
   function paintChat() {
     var box = $("#aiMsgs");
-    var empty = $("#aiEmpty");
-    if (!aiHistory.length) { box.innerHTML = ""; box.appendChild(empty); empty.hidden = false; return; }
+    if (!aiHistory.length) {
+      box.innerHTML = "";
+      var empty = ensureAiEmptyNode();
+      empty.hidden = false;
+      box.appendChild(empty);
+      return;
+    }
     box.innerHTML = aiHistory.map(aiMessageHTML).join("");
     box.scrollTop = box.scrollHeight;
+  }
+
+  function setAiSending(on) {
+    var btn = $("#aiSend");
+    if (btn) btn.disabled = !!on;
   }
 
   function sendAi(text) {
@@ -658,16 +805,30 @@ window.App = (function () {
     var langCode = lang();
     var langName = (window.I18n.langInfo(langCode) || { en: langCode }).en;
     var history = aiHistory.filter(function (m) { return m.role === "user" || m.role === "assistant"; }).slice(0, -1);
-    aiHistory.push({ role: "assistant", content: t("ai_thinking"), pending: true });
+    var msgId = ++aiMsgSeq;
+    aiHistory.push({ role: "assistant", content: t("ai_thinking"), pending: true, id: msgId });
     paintChat();
+    setAiSending(true);
     AI.ask(text, history, langCode, langName).then(function (res) {
-      aiHistory.pop();
-      aiHistory.push({ role: "assistant", content: res.text, sources: res.sources, confidence: res.confidence });
+      var idx = -1;
+      for (var i = 0; i < aiHistory.length; i++) {
+        if (aiHistory[i].id === msgId) { idx = i; break; }
+      }
+      if (idx !== -1) {
+        aiHistory[idx] = { role: "assistant", content: res.text, sources: res.sources, confidence: res.confidence };
+      }
       paintChat();
+      setAiSending(false);
     }).catch(function (e) {
-      aiHistory.pop();
-      aiHistory.push({ role: "error", content: t(e && e.key ? e.key : "ai_err_generic") });
+      var idx = -1;
+      for (var i = 0; i < aiHistory.length; i++) {
+        if (aiHistory[i].id === msgId) { idx = i; break; }
+      }
+      if (idx !== -1) {
+        aiHistory[idx] = { role: "error", content: t(e && e.key ? e.key : "ai_err_generic") };
+      }
       paintChat();
+      setAiSending(false);
     });
   }
 
@@ -798,10 +959,11 @@ window.App = (function () {
     $("#fCategory").addEventListener("change", function () { filters.category = this.value; renderExplore(); });
     $("#fRegion").addEventListener("change", function () { filters.region = this.value; renderExplore(); });
     $("#fInterest").addEventListener("change", function () { filters.interest = this.value; renderExplore(); });
-    $("#fSort").addEventListener("change", function () { filters.sort = this.value; renderExplore(); });
+    $("#fSort").addEventListener("change", function () { filters.sort = this.value; if (filters.sort === "near") ensureUserPos(); renderExplore(); });
     $("#expWorld").addEventListener("click", function () {
       filters.world = !filters.world;
-      if (!filters.world) { filters.gov = ""; filters.country = ""; filters.region = ""; }
+      filters.gov = ""; filters.country = ""; filters.region = ""; filters.category = ""; filters.interest = ""; filters.q = "";
+      $("#expSearch").value = "";
       renderExplore();
     });
     $("#expView").addEventListener("click", function () { go("map"); });
@@ -841,6 +1003,7 @@ window.App = (function () {
     $("#aiVision").addEventListener("change", function () {
       var f = this.files && this.files[0];
       if (!f) return;
+      if (f.size > 4 * 1024 * 1024) { toast(t("ai_err_generic")); this.value = ""; return; }
       var reader = new FileReader();
       reader.onload = function () {
         if (!AI.hasKey()) { aiHistory.push({ role: "error", content: t("ai_err_key") }); paintChat(); return; }
@@ -848,12 +1011,30 @@ window.App = (function () {
         paintChat();
         var langCode = lang();
         var langName = (window.I18n.langInfo(langCode) || { en: langCode }).en;
+        var msgId = ++aiMsgSeq;
+        aiHistory.push({ role: "assistant", content: t("ai_thinking"), pending: true, id: msgId });
+        paintChat();
+        setAiSending(true);
         AI.vision(reader.result, t("ai_vision_hint"), langCode, langName).then(function (res) {
-          aiHistory.push({ role: "assistant", content: res.text, sources: [] });
+          var idx = -1;
+          for (var i = 0; i < aiHistory.length; i++) {
+            if (aiHistory[i].id === msgId) { idx = i; break; }
+          }
+          if (idx !== -1) {
+            aiHistory[idx] = { role: "assistant", content: res.text, sources: [] };
+          }
           paintChat();
+          setAiSending(false);
         }).catch(function (e) {
-          aiHistory.push({ role: "error", content: t(e && e.key ? e.key : "ai_err_generic") });
+          var idx = -1;
+          for (var i = 0; i < aiHistory.length; i++) {
+            if (aiHistory[i].id === msgId) { idx = i; break; }
+          }
+          if (idx !== -1) {
+            aiHistory[idx] = { role: "error", content: t(e && e.key ? e.key : "ai_err_generic") };
+          }
           paintChat();
+          setAiSending(false);
         });
       };
       reader.readAsDataURL(f);
@@ -861,6 +1042,8 @@ window.App = (function () {
     });
 
     document.addEventListener("mors:lang", function () {
+      filtersUiBuilt = false;
+      planUiBuilt = false;
       route();
       refreshChrome();
     });
@@ -898,6 +1081,14 @@ window.App = (function () {
     bindGlobal();
     bindSettings();
     paintChat();
+
+    // Header shadow on scroll
+    var hdr = document.querySelector(".hdr");
+    if (hdr) {
+      var onScroll = function () { hdr.classList.toggle("scrolled", window.scrollY > 8); };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
 
     if (!location.hash) location.hash = "#/home";
     route();

@@ -5,19 +5,19 @@ describe("retrieveHeritage", () => {
   it("finds Babylon by Arabic name", () => {
     const r = retrieveHeritage("بابل");
     expect(r.length).toBeGreaterThan(0);
-    expect(r[0].id).toBe("iq-babylon");
+    expect(r[0]!.id).toBe("iq-babylon");
   });
 
   it("finds Babylon by English name", () => {
     const r = retrieveHeritage("babylon");
     expect(r.length).toBeGreaterThan(0);
-    expect(r[0].id).toBe("iq-babylon");
+    expect(r[0]!.id).toBe("iq-babylon");
   });
 
   it("finds a short English name like Ur", () => {
     const r = retrieveHeritage("Ur ruins");
     expect(r.length).toBeGreaterThan(0);
-    expect(r[0].id).toBe("iq-ur-ziggurat");
+    expect(r[0]!.id).toBe("iq-ur-ziggurat");
   });
 
   it("matches a governorate", () => {

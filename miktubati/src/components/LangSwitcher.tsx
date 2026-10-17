@@ -10,7 +10,7 @@ export default function LangSwitcher({ current }: { current: Lang }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const active = LANGS.find((l) => l.code === current) ?? LANGS[0];
+  const active = LANGS.find((l) => l.code === current) ?? LANGS[0]!;
 
   useEffect(() => {
     if (!open) return;

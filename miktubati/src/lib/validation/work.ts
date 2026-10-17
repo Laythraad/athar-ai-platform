@@ -4,7 +4,7 @@ import { z } from "zod";
 import { sanitizeContent, sanitizeTags, sanitizeText } from "./sanitize";
 
 export const CATEGORY_SLUGS = [
-  "poetry", "novels", "short", "history", "essays", "heritage", "science", "children", "other",
+  "poetry", "novels", "short", "history", "essays", "heritage", "science", "space", "children", "other",
 ] as const;
 
 export const MAX_TEXT_CONTENT = 200_000;

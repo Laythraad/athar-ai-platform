@@ -74,14 +74,14 @@ describe("upsertRating", () => {
   it("adds a new rating", () => {
     const out = upsertRating([], "a1", "r1", 4);
     expect(out).toHaveLength(1);
-    expect(out[0].stars).toBe(4);
+    expect(out[0]!.stars).toBe(4);
   });
 
   it("duplicate rating UPDATES rather than adds", () => {
     let list = upsertRating([], "a1", "r1", 4);
     list = upsertRating(list, "a1", "r1", 2);
     expect(list).toHaveLength(1);
-    expect(list[0].stars).toBe(2);
+    expect(list[0]!.stars).toBe(2);
   });
 
   it("keeps separate raters separate", () => {

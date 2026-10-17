@@ -31,7 +31,7 @@ export default function HeritageAssistant({ lang }: { lang: Lang }) {
   const [error, setError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
 
-  const suggestions = SUGGESTIONS[lang] ?? (lang === "ar" ? SUGGESTIONS.ar : FALLBACK_SUGGESTIONS);
+  const suggestions: string[] = SUGGESTIONS[lang] ?? (lang === "ar" ? (SUGGESTIONS.ar ?? FALLBACK_SUGGESTIONS) : FALLBACK_SUGGESTIONS);
 
   /* keep the newest bubble in view — long answers used to append below the fold */
   useEffect(() => {
@@ -117,7 +117,7 @@ export default function HeritageAssistant({ lang }: { lang: Lang }) {
       )}
 
       <div className="row" style={{ flexWrap: "wrap" }}>
-        {(messages.length === 0 ? suggestions : suggestions.slice(0, 2)).map((s) => (
+        {(messages.length === 0 ? suggestions : (suggestions ?? []).slice(0, 2)).map((s) => (
           <button key={s} type="button" className="pill ask-suggest" onClick={() => ask(s)} disabled={busy}>
             {s}
           </button>

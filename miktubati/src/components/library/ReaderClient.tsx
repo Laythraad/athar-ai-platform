@@ -52,23 +52,32 @@ export default function ReaderClient({ lang }: { lang: Lang }) {
   }
 
   useEffect(() => {
+    let cancelled = false;
     void (async () => {
-      const res = await fetch(`/api/library/${id}`);
-      if (res.status === 401) {
-        setErr("auth_required");
-        return;
+      try {
+        const res = await fetch(`/api/library/${id}`);
+        if (cancelled) return;
+        if (res.status === 401) {
+          setErr("auth_required");
+          return;
+        }
+        const data = (await res.json()) as { ok?: boolean; item?: Item };
+        if (cancelled) return;
+        if (!data.ok || !data.item) {
+          setErr("item_not_found");
+          return;
+        }
+        setItem(data.item);
+        setPage(data.item.last_page || 1);
+        const nres = await fetch(`/api/library/${id}/notes`);
+        if (cancelled) return;
+        const ndata = (await nres.json()) as { ok?: boolean; notes?: Note[] };
+        if (!cancelled && ndata.ok && ndata.notes) setNotes(ndata.notes);
+      } catch {
+        if (!cancelled) setErr("item_not_found");
       }
-      const data = (await res.json()) as { ok?: boolean; item?: Item };
-      if (!data.ok || !data.item) {
-        setErr("item_not_found");
-        return;
-      }
-      setItem(data.item);
-      setPage(data.item.last_page || 1);
-      const nres = await fetch(`/api/library/${id}/notes`);
-      const ndata = (await nres.json()) as { ok?: boolean; notes?: Note[] };
-      if (ndata.ok && ndata.notes) setNotes(ndata.notes);
     })();
+    return () => { cancelled = true; };
   }, [id]);
 
   const renderPage = useCallback(
@@ -98,6 +107,9 @@ export default function ReaderClient({ lang }: { lang: Lang }) {
           const ctx = canvas.getContext("2d");
           if (ctx) await pg.render({ canvasContext: ctx, viewport, canvas }).promise;
         }
+      } catch {
+        // A rejected render (e.g. component unmounted mid-await) must not
+        // surface as an unhandled rejection — just leave the last good frame.
       } finally {
         rendering.current = false;
       }

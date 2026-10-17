@@ -50,7 +50,7 @@ export function translitToArabic(token: string): string {
   while (i < lower.length) {
     const two = lower.slice(i, i + 2);
     if (SUBSTITUTIONS[two]) { out += SUBSTITUTIONS[two]; i += 2; continue; }
-    const one = lower[i];
+    const one = lower[i] ?? "";
     if (SUBSTITUTIONS[one]) { out += SUBSTITUTIONS[one]; i += 1; continue; }
     out += one; i += 1;
   }

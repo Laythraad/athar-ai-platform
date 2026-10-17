@@ -77,5 +77,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, errorKey: "sign_failed" }, { status: 500 });
   }
 
-  return NextResponse.redirect(signed.signedUrl);
+  // The Location header carries a short-lived signed token — never cache it.
+  return NextResponse.redirect(signed.signedUrl, {
+    headers: { "Cache-Control": "private, no-store" },
+  });
 }

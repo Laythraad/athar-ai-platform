@@ -545,9 +545,18 @@ grant execute on function public.grant_admin_if_config(text) to service_role;
 create or replace function public.recalc_author_rating(p_author uuid)
 returns void language plpgsql security definer set search_path = public as $$
 begin
-  update public.profiles p set
-    updated_at = now()
-  where p.id = p_author;
+  insert into public.author_rating_agg (author_id, avg_stars, count, updated_at)
+  select
+    p_author,
+    coalesce(avg(r.stars), 0)::numeric(3,2),
+    count(*)::int,
+    now()
+  from public.author_ratings r
+  where r.author_id = p_author
+  on conflict (author_id) do update
+    set avg_stars = excluded.avg_stars,
+        count     = excluded.count,
+        updated_at = now();
 end; $$;
 
 -- store aggregates on a dedicated table to avoid client-writable columns

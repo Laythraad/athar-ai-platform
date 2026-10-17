@@ -43,12 +43,14 @@ function fixCombiningMarks(s: string): string {
     let changed = false;
     const chars = [...out];
     for (let i = 0; i < chars.length - 1; i++) {
+      const cur = chars[i]!;
+      const nxt = chars[i + 1]!;
       if (
-        COMBINING_MARK.test(chars[i]) &&
-        ARABIC_LETTER.test(chars[i + 1]) &&
-        !COMBINING_MARK.test(chars[i + 1])
+        COMBINING_MARK.test(cur) &&
+        ARABIC_LETTER.test(nxt) &&
+        !COMBINING_MARK.test(nxt)
       ) {
-        [chars[i], chars[i + 1]] = [chars[i + 1], chars[i]];
+        [chars[i], chars[i + 1]] = [nxt, cur];
         changed = true;
       }
     }
@@ -64,15 +66,19 @@ function repairPunctuation(s: string): string {
   for (let pass = 0; pass < 8; pass++) {
     let changed = false;
     for (let i = 0; i < chars.length; i++) {
-      if (!SENTENCE_PUNCT.test(chars[i])) continue;
-      const prev = chars[i - 1];
-      const next = chars[i + 1];
+      const ch = chars[i]!;
+      if (!SENTENCE_PUNCT.test(ch)) continue;
+      const prev = i > 0 ? chars[i - 1] : undefined;
+      const next = i < chars.length - 1 ? chars[i + 1] : undefined;
       // glued inside a word → move right, past the following letters
       if (prev && ARABIC_LETTER.test(prev) && next && ARABIC_LETTER.test(next)) {
-        const punct = chars[i];
+        const punct = ch;
         let j = i + 1;
-        while (j < chars.length && (ARABIC_LETTER.test(chars[j]) || COMBINING_MARK.test(chars[j])))
-          j++;
+        while (j < chars.length) {
+          const cj = chars[j]!;
+          if (ARABIC_LETTER.test(cj) || COMBINING_MARK.test(cj)) j++;
+          else break;
+        }
         chars.splice(i, 1);
         chars.splice(j - 1, 0, punct);
         changed = true;
@@ -80,9 +86,13 @@ function repairPunctuation(s: string): string {
       }
       // stranded after a space → belongs to the end of the previous word
       if (prev === " " && next && ARABIC_LETTER.test(next)) {
-        const punct = chars[i];
+        const punct = ch;
         let k = i - 2;
-        while (k >= 0 && (ARABIC_LETTER.test(chars[k]) || COMBINING_MARK.test(chars[k]))) k--;
+        while (k >= 0) {
+          const ck = chars[k]!;
+          if (ARABIC_LETTER.test(ck) || COMBINING_MARK.test(ck)) k--;
+          else break;
+        }
         chars.splice(i, 1);
         chars.splice(k + 1, 0, punct);
         changed = true;

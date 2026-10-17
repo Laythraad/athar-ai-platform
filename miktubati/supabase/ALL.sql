@@ -1,7 +1,8 @@
-﻿-- ╔══════════════════════════════════════════════════════════════╗
--- ║  ALL-IN-ONE: run this ONCE in the Supabase SQL Editor       ║
--- ║  (0001 schema+RLS  →  0002 identity/privacy  →  demo seed)  ║
--- ╚══════════════════════════════════════════════════════════════╝
+﻿/* AUTO-GENERATED from supabase/migrations/*.sql — do not edit by hand.\n   Regenerate: node scripts/gen-all-sql.mjs (or concatenate migrations in order). */
+
+-- ═══════════════════════════════════════════════════════════
+-- SOURCE: 0001_init.sql
+-- ═══════════════════════════════════════════════════════════
 
 -- â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 -- ظ…ظƒطھط¨طھظٹ (MIKTUBATI) â€” community library for ATHAR IRAQ
@@ -60,17 +61,6 @@ as $$
   ) = 'service_role';
 $$;
 
--- â”€â”€â”€ helper: is the calling user banned/suspended? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-create or replace function public.is_blocked(uid uuid)
-returns boolean
-language sql stable
-as $$
-  select exists (
-    select 1 from public.profiles p
-    where p.id = uid and p.account_status in ('suspended','banned')
-  );
-$$;
-
 -- â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 -- profiles â€” public identity. Email is NEVER public.
 -- â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
@@ -91,6 +81,19 @@ create table if not exists public.profiles (
 -- pen name must not look like a link / handle
 alter table public.profiles
   add constraint pen_name_no_links check (pen_name !~ 'https?://' and pen_name !~ '@' and pen_name !~ '\s{2,}');
+
+-- â”€â”€â”€ helper: is the calling user banned/suspended? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Defined AFTER public.profiles â€” SQL function bodies are validated at
+-- creation time, so the table must already exist.
+create or replace function public.is_blocked(uid uuid)
+returns boolean
+language sql stable
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = uid and p.account_status in ('suspended','banned')
+  );
+$$;
 
 alter table public.profiles enable row level security;
 
@@ -548,9 +551,18 @@ grant execute on function public.grant_admin_if_config(text) to service_role;
 create or replace function public.recalc_author_rating(p_author uuid)
 returns void language plpgsql security definer set search_path = public as $$
 begin
-  update public.profiles p set
-    updated_at = now()
-  where p.id = p_author;
+  insert into public.author_rating_agg (author_id, avg_stars, count, updated_at)
+  select
+    p_author,
+    coalesce(avg(r.stars), 0)::numeric(3,2),
+    count(*)::int,
+    now()
+  from public.author_ratings r
+  where r.author_id = p_author
+  on conflict (author_id) do update
+    set avg_stars = excluded.avg_stars,
+        count     = excluded.count,
+        updated_at = now();
 end; $$;
 
 -- store aggregates on a dedicated table to avoid client-writable columns
@@ -687,7 +699,9 @@ create policy "user deletes own objects"
   using ((storage.foldername(name))[1] = auth.uid()::text);
 
 
--- ═══ END OF 0001 — 0002 STARTS BELOW ═══
+-- ═══════════════════════════════════════════════════════════
+-- SOURCE: 0002_identity_privacy.sql
+-- ═══════════════════════════════════════════════════════════
 
 -- â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
 -- 0002 â€” Identity + privacy hardening
@@ -755,136 +769,206 @@ alter table public.works
   add column if not exists is_sample boolean not null default false;
 
 
--- ═══ END OF 0002 — DEMO SEED STARTS BELOW ═══
+-- ═══════════════════════════════════════════════════════════
+-- SOURCE: 0003_atomic_read_count.sql
+-- ═══════════════════════════════════════════════════════════
 
--- â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
--- seed-demo.sql â€” SAMPLE / DEMO content for ظ…ظƒطھط¨طھظٹ
---
---  âڑ ï¸ڈ  EVERYTHING HERE IS FICTIONAL DEMO DATA.
---  Every profile and work is flagged  is_sample = true  so the UI can
---  label it honestly. None of it is presented as real members or real
---  literature. Run this AFTER 0001 and 0002 in the Supabase SQL editor.
---
---  It creates 6 sample authors, 10 sample works and a handful of ratings
---  so the library is not empty on a demo. Delete with:
---     delete from public.works where is_sample;
---     delete from public.profiles where is_sample;
--- â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+/* Atomic, concurrency-safe read counter. Replaces the previous read-then-write
+   increment in the work page, which could lose counts under concurrent loads.
 
--- categories are already seeded in 0001; ensure they exist regardless
-insert into public.categories (slug, name_ar, name_en, sort) values
-  ('poetry','ط´ط¹ط±','Poetry',1),
-  ('novels','ط±ظˆط§ظٹط§طھ','Novels',2),
-  ('short','ظ‚طµطµ ظ‚طµظٹط±ط©','Short stories',3),
-  ('history','طھط§ط±ظٹط®','History',4),
-  ('essays','ظ…ظ‚ط§ظ„ط§طھ','Essays',5),
-  ('heritage','طھط±ط§ط« ظˆظپظ„ظƒظ„ظˆط±','Heritage & folklore',6)
+   SECURITY DEFINER so the UPDATE bypasses the absence of a works UPDATE policy
+   (there is intentionally none, so authors can't inflate their own stats). But
+   that bypass must not become an open "bump any counter" endpoint, so the
+   function re-checks that the target work is published. The caller is the
+   server (service-role client) which already knows the page is public â€” the
+   previous `auth.uid() is not null` guard silently made every bump a no-op
+   for anonymous page loads, so it is removed. Read access itself stays public
+   (matching the "published works are publicly readable" SELECT policy).
+
+   `update ... returning` is atomic, so concurrent loads can't lose counts. */
+create or replace function public.bump_read_count(p_work_id uuid)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  update works
+     set read_count = coalesce(read_count, 0) + 1
+   where id = p_work_id
+     and status = 'published'
+  returning read_count;
+$$;
+
+revoke all on function public.bump_read_count(uuid) from public, anon;
+grant execute on function public.bump_read_count(uuid) to service_role, authenticated;
+
+
+-- ═══════════════════════════════════════════════════════════
+-- SOURCE: 0004_library_studio_passport.sql
+-- ═══════════════════════════════════════════════════════════
+
+/* 0004 â€” My Library (private by default), Creative Studio, Cultural Passport.
+
+   Design decisions:
+   â€¢ library_items is OWNER-ONLY via RLS. No public policies. Visibility
+     column exists for a future explicit share flow, default 'private'.
+   â€¢ creative_works: drafts are owner-only; publishing to the community goes
+     through the existing moderated /api/publish flow, never direct INSERT
+     into works.
+   â€¢ user_passport: owner-only visited-sites log.
+   â€¢ All timestamps are plain timestamptz defaults. */
+
+create table if not exists public.library_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  kind text not null check (kind in ('pdf', 'text', 'image', 'note')),
+  title text not null check (char_length(title) between 1 and 200),
+  file_path text,
+  file_mime text,
+  file_size bigint,
+  content_text text,
+  pages_total int,
+  is_favorite boolean not null default false,
+  last_page int not null default 1,
+  last_opened_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists library_items_user_idx
+  on public.library_items (user_id, created_at desc);
+
+create table if not exists public.library_notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  item_id uuid not null references public.library_items (id) on delete cascade,
+  page int,
+  body text not null check (char_length(body) between 1 and 5000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists library_notes_item_idx
+  on public.library_notes (item_id, page);
+
+create table if not exists public.library_bookmarks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  item_id uuid not null references public.library_items (id) on delete cascade,
+  page int not null,
+  label text,
+  created_at timestamptz not null default now(),
+  unique (item_id, page, user_id)
+);
+
+create table if not exists public.creative_works (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  kind text not null check (kind in ('poem', 'story', 'note')),
+  title text not null default '' check (char_length(title) <= 200),
+  body text not null default '' check (char_length(body) <= 100000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists creative_works_user_idx
+  on public.creative_works (user_id, updated_at desc);
+
+create table if not exists public.user_passport (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  site_id text not null,
+  visited_at timestamptz not null default now(),
+  primary key (user_id, site_id)
+);
+
+/* â”€â”€ RLS: owner-only everywhere â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+alter table public.library_items enable row level security;
+alter table public.library_notes enable row level security;
+alter table public.library_bookmarks enable row level security;
+alter table public.creative_works enable row level security;
+alter table public.user_passport enable row level security;
+
+drop policy if exists "library_items_own" on public.library_items;
+create policy "library_items_own" on public.library_items
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "library_notes_own" on public.library_notes;
+create policy "library_notes_own" on public.library_notes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "library_bookmarks_own" on public.library_bookmarks;
+create policy "library_bookmarks_own" on public.library_bookmarks
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "creative_works_own" on public.creative_works;
+create policy "creative_works_own" on public.creative_works
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "user_passport_own" on public.user_passport;
+create policy "user_passport_own" on public.user_passport
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+/* â”€â”€ storage: private library-files bucket (owner prefix only) â”€â”€â”€â”€â”€â”€ */
+
+insert into storage.buckets (id, name, public)
+values ('library-files', 'library-files', false)
+on conflict (id) do nothing;
+
+drop policy if exists "library files insert own" on storage.objects;
+create policy "library files insert own" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'library-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "library files select own" on storage.objects;
+create policy "library files select own" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'library-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "library files delete own" on storage.objects;
+create policy "library files delete own" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'library-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+
+
+
+
+-- SOURCE: 0005_space_interests.sql
+-- ══════════════════════════════════════════════════════════════════
+
+-- Migration 0005: add 'space' category + interests support
+-- Adds the missing space publishing category (FK for works.category)
+-- and user_interests table for the onboarding interests picker.
+
+-- â”€â”€ 1. space category â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+insert into public.categories (slug, name_ar, name_en, sort)
+values ('space', 'ط§ظ„ظپط¶ط§ط، ظˆط§ظ„ظپظ„ظƒ', 'Space & Astronomy', 9)
 on conflict (slug) do nothing;
 
--- â”€â”€ helper: minimal auth.users rows for the sample authors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- (so profiles.id â†’ auth.users.id keeps its foreign key intact).
--- These accounts are confirmed and share a throwaway demo password.
-do $$
-declare
-  u record;
-  demo_password text := crypt('demo-password-123', gen_salt('bf', 10));
-begin
-  for u in
-    select * from (values
-      ('11111111-1111-4111-8111-111111111101','zainab_karbala@example.test','ط²ظٹظ†ط§ط¨ ظƒط±ط¨ظ„ط§ط،'),
-      ('11111111-1111-4111-8111-111111111102','hassan_basri@example.test','ط­ط³ظ† ط§ظ„ط¨طµط±ظٹ'),
-      ('11111111-1111-4111-8111-111111111103','layla_mosul@example.test','ظ„ظٹظ„ظ‰ ظ…ظˆطµظ„'),
-      ('11111111-1111-4111-8111-111111111104','omar_baghdad@example.test','ط¹ظ…ط± ط¨ط؛ط¯ط§ط¯'),
-      ('11111111-1111-4111-8111-111111111105','nur_najaf@example.test','ظ†ظˆط± ط§ظ„ظ†ط¬ظپ'),
-      ('11111111-1111-4111-8111-111111111106','faisal_erbil@example.test','ظپظٹطµظ„ ط£ط±ط¨ظٹظ„')
-    ) as t(id, email, full_name)
-  loop
-    insert into auth.users (
-      id, aud, role, email, encrypted_password,
-      email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-      created_at, updated_at
-    ) values (
-      u.id, 'authenticated', 'authenticated', u.email, demo_password,
-      now(), '{"provider":"email","providers":["email"]}', '{}',
-      now(), now()
-    ) on conflict (id) do nothing;
-  end loop;
-end $$;
+-- â”€â”€ 2. user interests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+create table if not exists public.user_interests (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  interest   text not null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, interest)
+);
 
--- â”€â”€ public profiles (is_sample = true) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-insert into public.profiles (id, username, pen_name, bio, author_type, email_verified, is_sample) values
-  ('11111111-1111-4111-8111-111111111101','zainab_karbala','zainab_karbala','ط´ط§ط¹ط±ط©. ط£ظƒطھط¨ ط¹ظ† ط§ظ„ظ†ظ‡ط± ظˆط§ظ„ظ…ط¯ظٹظ†ط©. ط¨ظٹط§ظ†ط§طھ طھط¬ط±ظٹط¨ظٹط©.','poet',true,true),
-  ('11111111-1111-4111-8111-111111111102','hassan_basri','hassan_basri','ظƒط§طھط¨ ظ‚طµطµ ظ‚طµظٹط±ط©. ط¨ظٹط§ظ†ط§طھ طھط¬ط±ظٹط¨ظٹط©.','writer',true,true),
-  ('11111111-1111-4111-8111-111111111103','layla_mosul','layla_mosul','ط¨ط§ط­ط«ط© ظپظٹ ط§ظ„طھط§ط±ظٹط® ظˆط§ظ„طھط±ط§ط«. ط¨ظٹط§ظ†ط§طھ طھط¬ط±ظٹط¨ظٹط©.','historian',true,true),
-  ('11111111-1111-4111-8111-111111111104','omar_baghdad','omar_baghdad','ظƒط§طھط¨ ظ…ظ‚ط§ظ„ط§طھ. ط¨ظٹط§ظ†ط§طھ طھط¬ط±ظٹط¨ظٹط©.','writer',true,true),
-  ('11111111-1111-4111-8111-111111111105','nur_najaf','nur_najaf','ط´ط§ط¹ط±ط©. ط¨ظٹط§ظ†ط§طھ طھط¬ط±ظٹط¨ظٹط©.','poet',true,true),
-  ('11111111-1111-4111-8111-111111111106','faisal_erbil','faisal_erbil','ظ…ظ‡طھظ… ط¨ط§ظ„طھط±ط§ط« ظˆط§ظ„ظپظ„ظƒظ„ظˆط±. ط¨ظٹط§ظ†ط§طھ طھط¬ط±ظٹط¨ظٹط©.','writer',true,true)
-on conflict (id) do nothing;
+alter table public.user_interests enable row level security;
 
--- â”€â”€ private real names (only the owner can read these) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-insert into public.profile_private (user_id, full_name) values
-  ('11111111-1111-4111-8111-111111111101','ط²ظٹظ†ط§ط¨ ظƒط±ط¨ظ„ط§ط، ط§ظ„ظ†ط¬ط§ط±'),
-  ('11111111-1111-4111-8111-111111111102','ط­ط³ظ† ط¹ظ„ظٹ ط§ظ„ط¨طµط±ظٹ'),
-  ('11111111-1111-4111-8111-111111111103','ظ„ظٹظ„ظ‰ ظ…ط­ظ…ظˆط¯ ظ…ظˆطµظ„'),
-  ('11111111-1111-4111-8111-111111111104','ط¹ظ…ط± ط¹ط¨ط¯ ط¨ط؛ط¯ط§ط¯'),
-  ('11111111-1111-4111-8111-111111111105','ظ†ظˆط± ط­ط³ظٹظ† ط§ظ„ظ†ط¬ظپ'),
-  ('11111111-1111-4111-8111-111111111106','ظپظٹطµظ„ ظƒط±ظٹظ… ط£ط±ط¨ظٹظ„')
-on conflict (user_id) do nothing;
+create policy "own interests read"   on public.user_interests for select using (auth.uid() = user_id);
+create policy "own interests write"  on public.user_interests for insert with check (auth.uid() = user_id);
+create policy "own interests delete" on public.user_interests for delete using (auth.uid() = user_id);
 
--- â”€â”€ sample works (published + is_sample) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- Short ORIGINAL demo excerpts â€” not real published literature.
-insert into public.works (id, author_id, title, description, category, language, content, status, is_sample, published_at) values
-  ('22222222-2222-4222-8222-222222222201','11111111-1111-4111-8111-111111111101','ظ†ظ‡ط± ط§ظ„ظ…ط³ط§ط،','ظ‚طµظٹط¯ط© ظ‚طµظٹط±ط© ط¹ظ† ط§ظ„ظ†ظ‡ط± â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','poetry','ar',
-   'ط§ظ„ظ†ظ‡ط±ظڈ ظٹظ…ط´ظٹ ظپظٹ ط§ظ„ظ…ط¯ظ‰ ط¨ظ„ط§ ط¹ط¬ظ„ط©طŒ\nظٹط­ظ…ظ„ظڈ ظ…ظ† ط§ظ„ظ…ط¯ظ†ظگ ظ…ط§ طھط¨ظ‚ظ‘ظ‰.\nط£ظ†ط§ ط£ط¹ط¯ظڈظ‘ ط§ظ„ظ…ط³ط§ط،ظژ ظƒط£ظ†ظ‘ظ‡ ط®ط·ظˆط©طŒ\nظˆط£ط¯ط¹ظگ ط§ظ„ط¶ظˆط،ظژ ظٹظƒطھط¨ ظ…ط§ ط£ط±ط¯طھ.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222202','11111111-1111-4111-8111-111111111101','ظ…ط¯ظٹط­ ط§ظ„ط·ظٹظ†','ط¹ظ† ظ…ط¯ظٹظ†ط©ظچ ظ‚ط¯ظٹظ…ط© â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','poetry','ar',
-   'ط·ظٹظ†ظڈ ط§ظ„ظ…ط¯ظٹظ†ط©ظگ ظٹط°ظƒط±ظڈ ظƒظ„ظژظ‘ ط§ط³ظ…طŒ\nظˆظƒظ„ظژظ‘ ط¨ط§ط¨ظچ ظ…ط±ظ‘ ظ…ظ†ظ‡ ط§ظ„ط±ط­ظٹظ„.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222203','11111111-1111-4111-8111-111111111102','ظ…ظ‚ظ‡ظ‰ ط¹ظ„ظ‰ ط§ظ„ط±طµظٹظپ','ظ‚طµط© ظ‚طµظٹط±ط© â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','short','ar',
-   'ظƒط§ظ† ط§ظ„ط±طµظٹظپظڈ ظٹظ†طھط¸ط±ظڈ ط·ظ„ظ„ط§ط¹ظژ ط§ظ„ط´ظ…ط³طŒ ظˆط§ظ„ظ‚ظ‡ظˆط©ظڈ طھط¨ط±ط¯ظڈ ظپظٹ ظپظ†ط¬ط§ظ†ظچ ظ†ط³ظٹ طµط§ط­ط¨ظڈظ‡ ط£ظ† ظٹط´ط±ط¨ظ‡ط§.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222204','11111111-1111-4111-8111-111111111102','ط±ط³ط§ظ„ط© ظ„ظ… طھظڈط±ط³ظ„','ظ‚طµط© ظ‚طµظٹط±ط© â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','short','ar',
-   'ظƒطھط¨ظ‡ط§ ظ…ط±طھظٹظ†طŒ ظˆط­ط°ظپظ‡ط§ ط«ظ„ط§ط«ط§ظ‹. ط¨ظ‚ظٹ ط§ظ„ظˆط±ظ‚ظڈ ط£طµط¯ظ‚ظژ ظ…ظ†ظ‘ظ‡.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222205','11111111-1111-4111-8111-111111111103','ط£ط³ظˆط§ظ‚ ظ‚ط¯ظٹظ…ط©','ط¹ظ† طھط§ط±ظٹط® ط§ظ„ط£ط³ظˆط§ظ‚ â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','history','ar',
-   'ط§ظ„ط³ظˆظ‚ظڈ ظ„ظٹط³ ظ…ظƒط§ظ†ط§ظ‹ ظ„ظ„ط¨ظٹط¹ ظپط­ط³ط¨طŒ ط¨ظ„ ط°ط§ظƒط±ط©ظŒ ط¬ظ…ط§ط¹ظٹط©ظŒ طھطھظ†ظ‚ظ‘ظ„ ط¨ظٹظ† ط§ظ„ط£ط¬ظٹط§ظ„.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222206','11111111-1111-4111-8111-111111111104','ط¹ظ† ط§ظ„ظ‡ط¯ظˆط،','ظ…ظ‚ط§ظ„ â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','essays','ar',
-   'ط§ظ„ظ‡ط¯ظˆط،ظڈ ظ„ظٹط³ ط؛ظٹط§ط¨ظژ ط§ظ„طµظˆطھطŒ ط¨ظ„ ط­ط¶ظˆط±ظڈ ط§ظ†طھط¨ط§ظ‡. ظ†طھط¹ظ„ظ‘ظ…ظڈ ط£ظ† ظ†ط³ظ…ط¹ظژ ظ…ط§ ظ„ط§ ظٹظڈظ‚ط§ظ„.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222207','11111111-1111-4111-8111-111111111105','ط£ط؛ظ†ظٹط© ط§ظ„ظ…ط·ط±','ظ‚طµظٹط¯ط© â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','poetry','ar',
-   'ط§ظ„ظ…ط·ط±ظڈ ظٹط·ط±ظ‚ظڈ ط§ظ„ظ†ظˆط§ظپط°ظژ ظƒط£ظ†ظ‘ظ‡ ط¶ظٹظپظŒ ظ‚ط¯ظٹظ…طŒ ظˆط§ظ„ظ†ط§ط±ظڈ ظپظٹ ظ…ظˆظ‚ط¯ظگ ط§ظ„ط¨ظٹطھظگ ظ„ظ… طھظ†ط·ظپط¦ ط¨ط¹ط¯.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222208','11111111-1111-4111-8111-111111111105','ظ„ظٹظ„ط©ظڈ ط§ظ„ظ‚ظ…ط±','ظ‚طµظٹط¯ط© â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','poetry','ar',
-   'ط§ظ„ظ‚ظ…ط±ظڈ ظٹظ…ظ„ط£ظڈ ط§ظ„ظپظ†ط§ط،ظژ ط¶ظˆط،ط§ظ‹طŒ ظˆط§ظ„ظ†ط®ظ„ظڈ ظٹظ‚ظپظڈ ط­ط§ط±ط³ط§ظ‹ طµط§ظ…طھط§ظ‹.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222209','11111111-1111-4111-8111-111111111106','ط­ظƒط§ظٹط§طھ ط§ظ„ط¬ط¯ظ‘','ط¹ظ† ط§ظ„ظپظ„ظƒظ„ظˆط± â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','heritage','ar',
-   'ط§ظ„ط­ظƒط§ظٹط©ظڈ طھظڈط±ظˆظ‰ ظ„طھظڈط­ظپط¸طŒ ظ„ط§ ظ„طھظڈطµط¯ظ‘ظ‚. ظپظٹ ظƒظ„ظ‘ ط­ظƒط§ظٹط©ظچ ط¨ط§ط¨ظŒ ظ„ط°ط§ظƒط±ط©ظچ ط£ظƒط¨ط±.','published',true,now()),
-  ('22222222-2222-4222-8222-222222222210','11111111-1111-4111-8111-111111111106','ط·ط±ظٹظ‚ ط§ظ„طھظ…ظˆط±','ط¹ظ† ط§ظ„ط£ط¹ط±ط§ظپ â€” ظ†طµ طھط¬ط±ظٹط¨ظٹ.','heritage','ar',
-   'ط§ظ„ط·ط±ظٹظ‚ظڈ ط§ظ„ط°ظٹ ظٹظ…ط±ظ‘ ط¨ط¨ط³طھط§ظ†ظگ ط§ظ„طھظ…ط±ظگ ظٹط¹ظ„ظ‘ظ…ظƒظژ ط§ظ„طµط¨ط± ظ‚ط¨ظ„ ط§ظ„ظˆطµظˆظ„.','published',true,now())
-on conflict (id) do nothing;
+-- â”€â”€ 3. valid interest slugs (for CHECK constraint) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Keep in sync with int_* i18n keys in src/lib/i18n.ts
+alter table public.user_interests drop constraint if exists user_interests_interest_check;
+alter table public.user_interests add constraint user_interests_interest_check check (
+  interest in (
+    'space','science','history','literature','philosophy','art','music',
+    'cuisine','architecture','nature','travel','tech','math','medicine',
+    'physics','religion','photography','gaming','sports','economics'
+  )
+);
 
--- â”€â”€ sample ratings (raters are other sample authors) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-insert into public.author_ratings (author_id, rater_id, stars) values
-  ('11111111-1111-4111-8111-111111111101','11111111-1111-4111-8111-111111111102',5),
-  ('11111111-1111-4111-8111-111111111101','11111111-1111-4111-8111-111111111103',4),
-  ('11111111-1111-4111-8111-111111111103','11111111-1111-4111-8111-111111111101',5),
-  ('11111111-1111-4111-8111-111111111105','11111111-1111-4111-8111-111111111104',4),
-  ('11111111-1111-4111-8111-111111111106','11111111-1111-4111-8111-111111111105',5)
-on conflict (author_id, rater_id) do nothing;
-
--- â”€â”€ recompute the rating aggregates from the source rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-insert into public.author_rating_agg (author_id, avg_stars, count, updated_at)
-select
-  r.author_id,
-  round(avg(r.stars)::numeric, 2) as avg_stars,
-  count(*) as count,
-  now()
-from public.author_ratings r
-group by r.author_id
-on conflict (author_id) do update
-  set avg_stars = excluded.avg_stars,
-      count     = excluded.count,
-      updated_at = excluded.updated_at;
-
--- â”€â”€ recompute published-work rating stats (avg_rating / rating_count) â”€
--- works rating comes from author_ratings in this demo; keep counts honest.
-update public.works w
-set rating_count = coalesce(agg.count, 0),
-    avg_rating   = coalesce(agg.avg_stars, 0)
-from (
-  select author_id, avg_stars, count from public.author_rating_agg
-) agg
-where w.author_id = agg.author_id;
+-- â”€â”€ 4. regenerate ALL.sql marker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- This file is 0005; ALL.sql must be regenerated to include it.

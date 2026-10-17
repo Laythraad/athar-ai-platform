@@ -14,6 +14,7 @@ const CATEGORIES = [
   { slug: "essays", key: "cat_essays" },
   { slug: "heritage", key: "cat_heritage" },
   { slug: "science", key: "cat_science" },
+  { slug: "space", key: "cat_space" },
   { slug: "children", key: "cat_children" },
   { slug: "other", key: "cat_other" },
 ] as const;
@@ -99,6 +100,7 @@ export default function PublishView({
   // the author read their own).
   useEffect(() => {
     if (!editId) return;
+    let cancelled = false;
     const sb = browserSupabase();
     void (async () => {
       if (sb) {
@@ -109,7 +111,7 @@ export default function PublishView({
           )
           .eq("id", editId)
           .maybeSingle();
-        if (data) {
+        if (!cancelled && data) {
           setTitle(data.title ?? "");
           setDescription(data.description ?? "");
           setCategory(data.category ?? "poetry");
@@ -129,8 +131,9 @@ export default function PublishView({
           setStep(2);
         }
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, [editId]);
 
   function pickFile(f: File | undefined | null) {
@@ -204,6 +207,10 @@ export default function PublishView({
     setFieldErrors({});
     setResult(null);
 
+    // Track a freshly-uploaded file so we can delete it if publish fails
+    // (otherwise a 20MB orphan stays in storage forever).
+    let freshUpload: AttachedFile | null = null;
+
     try {
       if (!editId && !hasFile) {
         setFieldErrors({ file: t(lang, "pub_file_required") });
@@ -218,6 +225,7 @@ export default function PublishView({
       }
 
       const uploaded = await uploadPicked();
+      if (uploaded && !editId) freshUpload = uploaded;
 
       const res = await fetch("/api/publish", {
         method: editId ? "PATCH" : "POST",
@@ -257,12 +265,25 @@ export default function PublishView({
         setFieldErrors(localized);
         if (localized.content || localized.file || localized.fileMime) setStep(2);
         if (localized.ownsRights || localized.title) setStep(3);
+        // Clean up the orphan we just uploaded (edit-mode keeps the old file).
+        if (freshUpload) {
+          const sb = browserSupabase();
+          if (sb) {
+            await sb.storage.from("work-files").remove([freshUpload.path]).catch(() => undefined);
+          }
+        }
         setBusy(false);
         return;
       }
 
       if (!res.ok) {
         const key = data.errorKey ?? "";
+        if (freshUpload) {
+          const sb = browserSupabase();
+          if (sb) {
+            await sb.storage.from("work-files").remove([freshUpload.path]).catch(() => undefined);
+          }
+        }
         setErr(
           key === "auth_required"
             ? t(lang, "auth_signin_required")
@@ -288,6 +309,12 @@ export default function PublishView({
       });
       setBusy(false);
     } catch (e2) {
+      if (freshUpload) {
+        const sb = browserSupabase();
+        if (sb) {
+          await sb.storage.from("work-files").remove([freshUpload.path]).catch(() => undefined);
+        }
+      }
       setErr(e2 instanceof Error ? e2.message : t(lang, "pub_fail"));
       setBusy(false);
     }

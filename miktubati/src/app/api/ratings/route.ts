@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
   );
 
   const row = list[0];
+  if (!row) return err(500, "rating_failed");
 
   const { error: upsertErr } = await admin
     .from("author_ratings")

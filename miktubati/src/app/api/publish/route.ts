@@ -7,14 +7,15 @@ import { moderate, verdictToStatus, forceHumanReview } from "@/lib/moderation/pi
 import { suggestTags, mergeTags } from "@/lib/ai/enrich";
 import { extractPdfTextFromStorage } from "@/lib/files/pdf";
 import { isGeminiConfigured, readDbEnv } from "@/lib/env";
+import { checkRateLimit, RATE_RULES } from "@/lib/ratings";
 
 /* POST /api/publish
    Body: { title, description?, category, content?, tags?, language?,
            ownsRights, filePath?, fileMime?, fileSize? }
 
    Pipeline (every submission, no exceptions):
-     validate → sanitize → moderate (rules → Gemini, fail-closed) → insert
-       → status = verdictToStatus(verdict)
+     rate-limit → validate → sanitize → moderate (rules → Gemini, fail-closed)
+       → insert → status = verdictToStatus(verdict)
 
    The client can NEVER set `status`. A DB trigger forces `pending_review` on
    insert, and only the service role (this route) may change it afterwards —
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
   if (auth.error) return auth.error;
   const { session } = auth;
   const userId = session.userId!;
+
+  // Rate-limit: publish is the most expensive route (PDF extract + Gemini ×2).
+  const rl = checkRateLimit(userId, RATE_RULES.publish);
+  if (!rl.allowed) return err(429, "rate_limited");
 
   let raw: Record<string, unknown>;
   try {
@@ -45,6 +50,13 @@ export async function POST(request: NextRequest) {
   }
 
   const v = validated.value;
+
+  // filePath must be the caller's own upload (`<uid>/<uuid>.<ext>`). Without
+  // this check a signed-in attacker could point at another user's object and
+  // exfiltrate it via /api/work-file (which trusts works.file_path).
+  if (v.filePath && !v.filePath.startsWith(`${userId}/`)) {
+    return err(400, "file_path_forbidden");
+  }
 
   const admin = adminSupabase();
   if (!admin) return err(503, "service_role_not_configured");
@@ -226,6 +238,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   const v = validated.value;
+
+  // filePath must be the caller's own upload (`<uid>/<uuid>.<ext>`).
+  if (v.filePath && !v.filePath.startsWith(`${userId}/`)) {
+    return err(400, "file_path_forbidden");
+  }
 
   const admin = adminSupabase();
   if (!admin) return err(503, "service_role_not_configured");

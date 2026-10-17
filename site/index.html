@@ -34,6 +34,7 @@ try {
       <a href="#/explore" data-nav="explore" data-i18n="nav_explore">Explore</a>
       <a href="#/map" data-nav="map" data-i18n="nav_map">Map</a>
       <a href="#/plan" data-nav="plan" data-i18n="nav_plan">Plan a trip</a>
+      <a href="#/space" data-nav="space" data-i18n="nav_space">Space</a>
       <a href="#/learn" data-nav="learn" data-i18n="nav_learn">Learn</a>
       <a href="#/passport" data-nav="passport" data-i18n="nav_passport">Passport</a>
       <a href="#/ai" data-nav="ai" data-i18n="nav_ai">AI guide</a>
@@ -218,6 +219,42 @@ try {
     </div>
 
     <div id="planOut"></div>
+    <div id="planTrip" class="set-card" style="margin-top:1rem"></div>
+  </div>
+</section>
+
+<!-- ══════════════ SPACE ══════════════ -->
+<section class="view" id="view-space" hidden>
+  <div class="wrap section">
+    <h1 data-i18n="space_title">Space & Astronomy Heritage</h1>
+    <p class="sub" data-i18n="space_sub">Observatories, launch sites and the science of the sky — from Baghdad to Baikonur.</p>
+
+    <div class="set-card">
+      <div class="filter-row">
+        <label class="field"><span data-i18n="exp_search">Search</span>
+          <input class="input" id="spaceQ" type="search" placeholder="" autocomplete="off" />
+        </label>
+        <label class="field"><span data-i18n="exp_category">Category</span>
+          <select class="select" id="spaceCat">
+            <option value="" data-i18n="space_filter_all">All</option>
+            <option value="observatory" data-i18n="space_filter_obs">Observatories</option>
+            <option value="space" data-i18n="space_filter_launch">Launch sites</option>
+            <option value="museum" data-i18n="space_filter_museum">Space museums</option>
+            <option value="science" data-i18n="space_filter_historic">Historic astronomy</option>
+          </select>
+        </label>
+        <label class="field"><span data-i18n="exp_sort">Sort</span>
+          <select class="select" id="spaceSort">
+            <option value="az" data-i18n="exp_az">A–Z</option>
+            <option value="visit" data-i18n="exp_visit">Visit time</option>
+            <option value="near" data-i18n="exp_near">Nearest first</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div id="spaceGrid" class="cards"></div>
+    <p id="spaceEmpty" class="muted" hidden data-i18n="space_empty">No space sites match your filters.</p>
   </div>
 </section>
 
@@ -450,6 +487,7 @@ try {
       <a href="#/explore" data-nav="explore" data-i18n="nav_explore">Explore</a>
       <a href="#/map" data-nav="map" data-i18n="nav_map">Map</a>
       <a href="#/plan" data-nav="plan" data-i18n="nav_plan">Plan a trip</a>
+      <a href="#/space" data-nav="space" data-i18n="nav_space">Space</a>
       <a href="#/learn" data-nav="learn" data-i18n="nav_learn">Learn</a>
       <a href="#/passport" data-nav="passport" data-i18n="nav_passport">Passport</a>
       <a href="#/ai" data-nav="ai" data-i18n="nav_ai">AI guide</a>
@@ -483,6 +521,7 @@ try {
 <script src="data/sites-europe-west.js"></script>
 <script src="data/sites-europe-east.js"></script>
 <script src="data/sites-iraq.js"></script>
+<script src="data/sites-space.js"></script>
 <script src="data/learn.js"></script>
 <script src="data/i18n.js"></script>
 <script src="data/i18n-a.js"></script>

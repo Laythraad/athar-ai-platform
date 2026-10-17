@@ -17,7 +17,14 @@ window.AI = (function () {
   function buildChunks() {
     if (chunks) return chunks;
     var sites = (window.SITES || []).filter(function (s) {
-      return s.country && s.country.iso === "IQ";
+      // Iraq sites + space/science/museum sites (global)
+      if (s.country && s.country.iso === "IQ") return true;
+      if (s.cat === "space" || s.cat === "science") return true;
+      // Space museums (e.g. Smithsonian)
+      if (s.cat === "museum" && s.tags && s.tags.some(function (t) {
+        return /space|astronomy|rocket|NASA/i.test(t);
+      })) return true;
+      return false;
     });
     chunks = [];
     sites.forEach(function (s) {

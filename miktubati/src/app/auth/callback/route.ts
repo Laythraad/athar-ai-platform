@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { readDbEnv } from "@/lib/env";
+import { safeNext } from "@/lib/safeNext";
 
 /** OAuth / email-link landing. Exchanges the code for a session, then routes. */
 export async function GET(request: NextRequest) {
   const env = readDbEnv();
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/onboarding";
+  const next = safeNext(searchParams.get("next"));
 
   if (env.url && env.anonKey && code) {
     const supabase = createServerClient(env.url, env.anonKey, {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const redirect = new URL(next.startsWith("/") ? next : "/onboarding", origin);
+      const redirect = new URL(next, origin);
       const res = NextResponse.redirect(redirect);
 
       // Re-issue the session cookies on the redirect response.

@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     penName?: string;
     bio?: string;
     avatarUrl?: string;
+    interests?: string[];
   };
   try {
     body = await request.json();
@@ -122,7 +123,26 @@ export async function POST(request: NextRequest) {
     return err(500, "onboarding_failed", privErr.message);
   }
 
-  // 5. grant admin if this is the configured address AND the email is verified.
+  // 5. store user interests (validated against the allowed slug list)
+  const VALID_INTERESTS = new Set([
+    "space", "science", "history", "literature", "philosophy", "art", "music",
+    "cuisine", "architecture", "nature", "travel", "tech", "math", "medicine",
+    "physics", "religion", "photography", "gaming", "sports", "economics",
+  ]);
+  if (Array.isArray(body.interests)) {
+    // Always clear first so deselections persist (skip = empty set = cleared)
+    await admin.from("user_interests").delete().eq("user_id", session.userId);
+    const valid = body.interests
+      .filter((s): s is string => typeof s === "string" && VALID_INTERESTS.has(s))
+      .slice(0, 20);
+    if (valid.length > 0) {
+      const rows = valid.map((interest) => ({ user_id: session.userId, interest }));
+      await admin.from("user_interests").insert(rows);
+      // non-fatal: interests are optional
+    }
+  }
+
+  // 6. grant admin if this is the configured address AND the email is verified.
   //    Both checks live in the Postgres function; this is not client-settable.
   const adminEmail = configuredAdminEmail();
   if (adminEmail && session.email && session.email.trim().toLowerCase() === adminEmail) {
@@ -141,7 +161,7 @@ export async function POST(request: NextRequest) {
     after: { username, guidelines_version: latest },
   });
 
-  // 6. also issue the session-scoped client so the browser picks up the profile
+  // 7. also issue the session-scoped client so the browser picks up the profile
   const supabase = await serverSupabase();
   if (supabase) {
     try {

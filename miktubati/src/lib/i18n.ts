@@ -122,6 +122,7 @@ export const en: Dict = {
   cat_essays: "Essays",
   cat_heritage: "Heritage & folklore",
   cat_science: "Science",
+  cat_space: "Space & Astronomy",
   cat_children: "Children's",
   cat_other: "Other",
 
@@ -301,6 +302,8 @@ export const en: Dict = {
   her_cat_museum: "Museum",
   her_cat_food: "Food",
   her_cat_craft: "Craft",
+  her_cat_science: "Science",
+  her_cat_space: "Space & Astronomy",
   her_gov: "Governorate",
   her_gov_all: "All governorates",
   her_results: "{n} places",
@@ -376,6 +379,33 @@ export const en: Dict = {
   ob_username_invalid: "That username format is not allowed.",
   ob_username_taken: "That username is taken.",
   lib_sample: "Sample data",
+
+  // ── interests ────────────────────────────────────────────────────
+  int_title: "Your interests",
+  int_body: "Pick what excites you — we'll personalise your feed, suggestions and heritage picks.",
+  int_hint: "Choose at least 1 (you can change later)",
+  int_space: "Space & Astronomy",
+  int_science: "Science",
+  int_history: "History",
+  int_literature: "Literature",
+  int_philosophy: "Philosophy",
+  int_art: "Art & Calligraphy",
+  int_music: "Music",
+  int_cuisine: "Cuisine",
+  int_architecture: "Architecture",
+  int_nature: "Nature & Wildlife",
+  int_travel: "Travel",
+  int_tech: "Technology",
+  int_math: "Mathematics",
+  int_medicine: "Medicine",
+  int_physics: "Physics",
+  int_religion: "Religion & Spirituality",
+  int_photography: "Photography",
+  int_gaming: "Gaming",
+  int_sports: "Sports",
+  int_economics: "Economics",
+  int_selected: "{n} selected",
+  int_skip: "Skip for now",
 
   // ── v2: languages, MORS AI, app shell, tourism ──────────────────
   lang_pick: "Language",
@@ -719,6 +749,7 @@ export const ar: Dict = {
   cat_essays: "مقالات",
   cat_heritage: "تراث وفلكلور",
   cat_science: "علوم",
+  cat_space: "الفضاء والفلك",
   cat_children: "أطفال",
   cat_other: "أخرى",
 
@@ -897,6 +928,8 @@ export const ar: Dict = {
   her_cat_museum: "متحف",
   her_cat_food: "طعام",
   her_cat_craft: "حِرفة",
+  her_cat_science: "علوم",
+  her_cat_space: "فضاء وفلك",
   her_gov: "المحافظة",
   her_gov_all: "كل المحافظات",
   her_results: "{n} موقعاً",
@@ -1213,6 +1246,33 @@ const arMission: Dict = {
   ob_username_invalid: "صيغة اسم المستخدم غير مسموحة.",
   ob_username_taken: "اسم المستخدم هذا محجوز.",
   lib_sample: "بيانات تجريبية",
+
+  // ── الاهتمامات ───────────────────────────────────────────────────
+  int_title: "اهتماماتك",
+  int_body: "اختر ما يثير اهتمامك — سنخصّص اقتراحاتك ومحتواك وترشيحاتك التراثية.",
+  int_hint: "اختر واحداً على الأقل (يمكنك تغييره لاحقاً)",
+  int_space: "الفضاء والفلك",
+  int_science: "العلوم",
+  int_history: "التاريخ",
+  int_literature: "الأدب",
+  int_philosophy: "الفلسفة",
+  int_art: "الفن والخط",
+  int_music: "الموسيقى",
+  int_cuisine: "المطبخ",
+  int_architecture: "العمارة",
+  int_nature: "الطبيعة والحياة البرية",
+  int_travel: "السفر",
+  int_tech: "التكنولوجيا",
+  int_math: "الرياضيات",
+  int_medicine: "الطب",
+  int_physics: "الفيزياء",
+  int_religion: "الروحانيات والعقيدة",
+  int_photography: "التصوير",
+  int_gaming: "الألعاب",
+  int_sports: "الرياضة",
+  int_economics: "الاقتصاد",
+  int_selected: "تم اختيار {n}",
+  int_skip: "تخطَّ الآن",
 };
 
 /* Machine-generated UI dicts for the extra LANGS (build-time, committed).
@@ -1229,7 +1289,7 @@ const dicts: Record<string, Dict> = {
 
 /** Translate a key. Falls back to English, then to the key itself. */
 export function t(lang: Lang, key: string, params?: Record<string, string | number>): string {
-  let s = dicts[lang]?.[key] ?? dicts.en[key] ?? key;
+  let s = dicts[lang]?.[key] ?? dicts.en?.[key] ?? key;
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       s = s.split(`{${k}}`).join(String(v));
@@ -1245,28 +1305,32 @@ export function isRtl(lang: Lang): boolean {
 /** Category slug → localized label. Falls back to the raw slug if unknown. */
 export function catLabel(lang: Lang, slug: string): string {
   const key = `cat_${slug}`;
-  const label = dicts[lang]?.[key] ?? dicts.en[key];
+  const label = dicts[lang]?.[key] ?? dicts.en?.[key];
   return label && label !== key ? label : slug;
 }
 
-/** Localized count with correct Arabic pluralization for works / reads. */
+/** Localized count with correct Arabic pluralization for works / reads.
+    Only `ar` gets the Arabic plural rules; every other language (including the
+    generated ones) uses the English-style singular/plural form, which is a
+    better fallback than Arabic for fr/es/de/ja/etc. */
 export function formatCount(lang: Lang, n: number, kind: "work" | "read"): string {
-  if (lang === "en") {
-    if (kind === "work") return n === 1 ? "1 work" : `${n} works`;
-    return n === 1 ? "1 read" : `${n} reads`;
+  if (lang === "ar") {
+    if (kind === "work") {
+      if (n === 0) return "لا توجد أعمال";
+      if (n === 1) return "عمل واحد";
+      if (n === 2) return "عملان";
+      if (n >= 3 && n <= 10) return `${n} أعمال`;
+      return `${n} عملاً`;
+    }
+    if (n === 0) return "لا توجد قراءات";
+    if (n === 1) return "قراءة واحدة";
+    if (n === 2) return "قراءتان";
+    if (n >= 3 && n <= 10) return `${n} قراءات`;
+    return `${n} قراءة`;
   }
-  if (kind === "work") {
-    if (n === 0) return "لا توجد أعمال";
-    if (n === 1) return "عمل واحد";
-    if (n === 2) return "عملان";
-    if (n >= 3 && n <= 10) return `${n} أعمال`;
-    return `${n} عملاً`;
-  }
-  if (n === 0) return "لا توجد قراءات";
-  if (n === 1) return "قراءة واحدة";
-  if (n === 2) return "قراءتان";
-  if (n >= 3 && n <= 10) return `${n} قراءات`;
-  return `${n} قراءة`;
+  // en + every generated language: simple English-style plural as a stable fallback
+  if (kind === "work") return n === 1 ? "1 work" : `${n} works`;
+  return n === 1 ? "1 read" : `${n} reads`;
 }
 
 /** Map a raw Supabase auth error message to a localized i18n key. */export function authErrorKey(message: string): string {
@@ -1289,14 +1353,14 @@ export function bl(lang: Lang, v: { en: string; ar: string } | null | undefined)
 /** Heritage category slug → localized label. */
 export function herCatLabel(lang: Lang, cat: string): string {
   const key = `her_cat_${cat}`;
-  const label = dicts[lang]?.[key] ?? dicts.en[key];
+  const label = dicts[lang]?.[key] ?? dicts.en?.[key];
   return label && label !== key ? label : cat;
 }
 
 /** Coordinate precision slug → localized label. */
 export function herPrecisionLabel(lang: Lang, precision: string): string {
   const key = `her_precision_${precision}`;
-  const label = dicts[lang]?.[key] ?? dicts.en[key];
+  const label = dicts[lang]?.[key] ?? dicts.en?.[key];
   return label && label !== key ? label : precision;
 }
 

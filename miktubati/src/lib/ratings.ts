@@ -56,7 +56,8 @@ export function upsertRating(
     return [...existing, { authorId, raterId, stars }];
   }
   const next = existing.slice();
-  next[i] = { ...next[i], stars };
+  const prev = next[i]!;
+  next[i] = { ...prev, stars };
   return next;
 }
 
@@ -69,26 +70,27 @@ export interface RateLimitRule {
   windowMs: number;
 }
 
-export const RATE_RULES: Record<string, RateLimitRule> = {
+export const RATE_RULES = {
   publish: { action: "publish", limit: 5, windowMs: 60 * 60 * 1000 },
   rating: { action: "rating", limit: 30, windowMs: 60 * 60 * 1000 },
   report: { action: "report", limit: 10, windowMs: 60 * 60 * 1000 },
   moderation: { action: "moderation", limit: 120, windowMs: 60 * 60 * 1000 },
   pen_name_change: { action: "pen_name_change", limit: 3, windowMs: 30 * 24 * 60 * 60 * 1000 },
-};
+} as const satisfies Record<string, RateLimitRule>;
 
 const buckets = new Map<string, number[]>();
 
 export function checkRateLimit(
   key: string,
-  rule: RateLimitRule,
+  rule: RateLimitRule | undefined,
   now: number = Date.now(),
 ): { allowed: boolean; remaining: number; retryAfterMs: number } {
+  if (!rule) return { allowed: false, remaining: 0, retryAfterMs: 0 };
   const k = `${key}:${rule.action}`;
   const windowStart = now - rule.windowMs;
   const hits = (buckets.get(k) ?? []).filter((t) => t > windowStart);
   if (hits.length >= rule.limit) {
-    const oldest = hits[0];
+    const oldest = hits[0] ?? now;
     return { allowed: false, remaining: 0, retryAfterMs: Math.max(0, oldest + rule.windowMs - now) };
   }
   hits.push(now);

@@ -1436,5 +1436,140 @@ export const IRAQ_SITES: HeritageSite[] = [
       "url": "https://en.wikipedia.org/wiki/Imam_Ali_Shrine",
       "checked": "2026-10"
     }
+  },
+  {
+    "id": "iq-house-of-wisdom",
+    "slug": "house-of-wisdom",
+    "name": {
+      "en": "House of Wisdom (Baghdad)",
+      "ar": "بيت الحكمة (بغداد)"
+    },
+    "country": {
+      "en": "Iraq",
+      "ar": "العراق",
+      "iso": "IQ"
+    },
+    "governorate": {
+      "en": "Baghdad",
+      "ar": "بغداد"
+    },
+    "continent": "Asia",
+    "region": "Middle East & North Africa",
+    "city": {
+      "en": "Baghdad",
+      "ar": "بغداد"
+    },
+    "lat": 33.3452,
+    "lng": 44.4089,
+    "precision": "city",
+    "cat": "science",
+    "era": {
+      "en": "c. 820–1258 CE, Abbasid Golden Age",
+      "ar": "٨٢٠–١٢٥٨م، العصر الذهبي العباسي"
+    },
+    "summary": {
+      "en": "The House of Wisdom was the intellectual heart of the Abbasid Caliphate — a library, translation academy and observatory where scholars like al-Khwarizmi and al-Kindi translated Greek, Persian and Indian texts into Arabic and founded algebra, optics and astronomy.",
+      "ar": "بيت الحكمة كان القلب الفكري للخلافة العباسية — مكتبة وأكاديمية ترجمة ومرصد، حيث عمل علماء مثل الخوارزمي والكندي على ترجمة النصوص اليونانية والفارسية والهندية إلى العربية وأسّسوا الجبر والبصريات والفلك."
+    },
+    "significance": {
+      "en": "The translation movement preserved and advanced science for centuries; algebra (al-jabr) and algorithm (al-Khwarizmi) both trace back to scholars working in Baghdad.",
+      "ar": "حركة الترجمة حفظت العلوم وطوّرتها لقرون؛ الجبر والخوارزمي كلاهما يعود إلى علماء عملوا في بغداد."
+    },
+    "visit": 90,
+    "tags": [
+      "astronomy",
+      "science",
+      "mathematics",
+      "Abbasid",
+      "Baghdad",
+      "al-Khwarizmi"
+    ],
+    "facts": [
+      {
+        "en": "The original building was destroyed during the Mongol sack of Baghdad in 1258.",
+        "ar": "دُمّر المبنى الأصلي أثناء نهب المغول لبغداد عام 1258."
+      },
+      {
+        "en": "Al-Khwarizmi's algebra was written in Baghdad and gave us the word 'algebra'.",
+        "ar": "كتب الخوارزمي الجبر في بغداد ومنه جاءت كلمة الجبر."
+      }
+    ],
+    "lastVerifiedAt": "2026-10",
+    "visitCost": null,
+    "openingHours": null,
+    "accessibilityNotes": null,
+    "source": {
+      "title": "House of Wisdom",
+      "publisher": "Encyclopaedia Britannica",
+      "url": "https://www.britannica.com/topic/House-of-Wisdom",
+      "checked": "2026-10"
+    }
+  },
+  {
+    "id": "iq-baghdad-planetarium",
+    "slug": "baghdad-planetarium",
+    "name": {
+      "en": "Baghdad Planetarium",
+      "ar": "القبة الفلكية (بغداد)"
+    },
+    "country": {
+      "en": "Iraq",
+      "ar": "العراق",
+      "iso": "IQ"
+    },
+    "governorate": {
+      "en": "Baghdad",
+      "ar": "بغداد"
+    },
+    "continent": "Asia",
+    "region": "Middle East & North Africa",
+    "city": {
+      "en": "Baghdad",
+      "ar": "بغداد"
+    },
+    "lat": 33.3200,
+    "lng": 44.4400,
+    "precision": "city",
+    "cat": "space",
+    "era": {
+      "en": "Opened 1986 CE",
+      "ar": "افتُتح ١٩٨٦م"
+    },
+    "summary": {
+      "en": "Iraq's national planetarium in Zawraa Park. The dome theatre projects the night sky, and exhibits cover Iraqi contributions to astronomy — from Abbasid-era star catalogs to modern astrophysics.",
+      "ar": "القبة الفلكية الوطنية العراقية في حديقة الزوراء. تعرض القبة سماء الليل، وتعرض المعارض إسهامات العراقيين في الفلك — من جداول النجوم العباسية إلى الفيزياء الفلكية الحديثة."
+    },
+    "significance": {
+      "en": "One of the few planetariums in the Arab world, continuing Baghdad's thousand-year tradition of astronomical study.",
+      "ar": "واحدة من القباب الفلكية القليلة في العالم العربي، وتواصل تق بغداد الألفي في دراسة الفلك."
+    },
+    "visit": 90,
+    "tags": [
+      "space",
+      "astronomy",
+      "planetarium",
+      "Baghdad",
+      "science"
+    ],
+    "facts": [
+      {
+        "en": "Located in Zawraa Park, Baghdad's largest public park.",
+        "ar": "تقع في حديقة الزوراء، أكبر حدائق بغداد العامة."
+      },
+      {
+        "en": "The dome projects the night sky as seen from Baghdad's coordinates.",
+        "ar": "تعرض القبة سماء الليل كما تُرى من إحداثيات بغداد."
+      }
+    ],
+    "lastVerifiedAt": "2026-10",
+    "visitCost": null,
+    "openingHours": null,
+    "accessibilityNotes": null,
+    "source": {
+      "title": "Baghdad Planetarium",
+      "publisher": "Iraqi Ministry of Culture",
+      "url": "https://www.iraqitourism.gov.iq/",
+      "checked": "2026-10"
+    }
   }
 ];

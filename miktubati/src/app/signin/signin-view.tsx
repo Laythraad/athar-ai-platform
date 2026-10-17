@@ -7,11 +7,12 @@ import { Suspense } from "react";
 import { browserSupabase } from "@/lib/supabase/client";
 import { t, authErrorKey, type Lang } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
+import { safeNext } from "@/lib/safeNext";
 
 function SigninForm({ lang }: { lang: Lang }) {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") ?? "/library";
+  const next = safeNext(params.get("next"), "/library");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

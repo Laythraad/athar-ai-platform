@@ -67,6 +67,17 @@ function HeaderNav({
           pending={pending}
         />
 
+        {/* Inline quick links — visible on desktop only */}
+        <nav className="hdr-links" aria-label="Primary">
+          <Link href="/heritage" className="hdr-link">{t(lang, "nav_heritage")}</Link>
+          <Link href="/library" className="hdr-link">{t(lang, "nav_library")}</Link>
+          <Link href="/ai" className="hdr-link">{t(lang, "nav_sec_explore")}</Link>
+          <Link href="/travel" className="hdr-link">{t(lang, "nav_travel")}</Link>
+          {canPublish && (
+            <Link href="/publish" className="hdr-link hdr-link-accent">{t(lang, "nav_publish")}</Link>
+          )}
+        </nav>
+
         <div className="hdr-right">
           <form className="hdr-search" role="search" method="get" action="/search">
             <input

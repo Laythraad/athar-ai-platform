@@ -15,6 +15,8 @@ const CAT_COLORS: Record<string, string> = {
   museum: "#5a7ab0",
   food: "#a06a3a",
   craft: "#8a7a2c",
+  science: "#2ca02c",
+  space: "#4a3ab0",
 };
 
 const W = 800;

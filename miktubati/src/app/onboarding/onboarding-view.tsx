@@ -8,11 +8,11 @@ import { t, type Lang } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 
 /* Onboarding — the first thing a new member sees after signing in with Google.
-   Flow:  Welcome/mission → Features → Rules (accept) → Identity → Done
+   Flow:  Welcome/mission → Features → Rules (accept) → Identity → Interests → Done
    The mission step explains what مكتبتي is and why it matters for Iraq,
    tourism and culture — this is intentional, not decoration. */
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 type Stage =
   | "loading"
@@ -21,10 +21,17 @@ type Stage =
   | "step_features"
   | "step_rules"
   | "step_identity"
+  | "step_interests"
   | "ready"
   | "unconfigured";
 
 const FEATURES = ["ob_f_read", "ob_f_write", "ob_f_rate", "ob_f_shelf", "ob_f_safe", "ob_f_lang"] as const;
+
+const INTEREST_SLUGS = [
+  "space", "science", "history", "literature", "philosophy", "art", "music",
+  "cuisine", "architecture", "nature", "travel", "tech", "math", "medicine",
+  "physics", "religion", "photography", "gaming", "sports", "economics",
+] as const;
 
 export default function OnboardingView({
   initialLang,
@@ -40,8 +47,18 @@ export default function OnboardingView({
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [interests, setInterests] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  function toggleInterest(slug: string) {
+    setInterests((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }
 
   useEffect(() => {
     // Auth bootstrap: every setState happens in an async callback, never
@@ -85,6 +102,7 @@ export default function OnboardingView({
           fullName: fullName.trim(),
           username: username.trim().toLowerCase(),
           bio,
+          interests: Array.from(interests),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -163,7 +181,9 @@ export default function OnboardingView({
           ? 3
           : stage === "step_identity"
             ? 4
-            : 5;
+            : stage === "step_interests"
+              ? 5
+              : 6;
 
   return (
     <div className="panel-wide">
@@ -281,11 +301,62 @@ export default function OnboardingView({
           )}
 
           <div className="row">
-            <button className="btn btn-primary" onClick={finish} disabled={!identityReady || busy}>
-              {busy ? t(lang, "pub_submitting") : t(lang, "ob_finish")}
+            <button
+              className="btn btn-primary"
+              disabled={!identityReady || busy}
+              onClick={() => setStage("step_interests")}
+            >
+              {t(lang, "common_next")}
             </button>
             <button className="btn btn-ghost" onClick={() => setStage("step_rules")} disabled={busy}>
               {t(lang, "common_back")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {stage === "step_interests" && (
+        <div className="card stack">
+          <h1 className="page-title">{t(lang, "int_title")}</h1>
+          <p className="muted">{t(lang, "int_body")}</p>
+          <p className="tiny muted" style={{ margin: 0 }}>{t(lang, "int_hint")}</p>
+
+          <div className="row" style={{ flexWrap: "wrap", gap: "0.5rem" }}>
+            {INTEREST_SLUGS.map((slug) => {
+              const on = interests.has(slug);
+              return (
+                <button
+                  key={slug}
+                  type="button"
+                  className={`btn btn-sm ${on ? "btn-primary" : "btn-ghost"}`}
+                  aria-pressed={on}
+                  onClick={() => toggleInterest(slug)}
+                >
+                  {t(lang, `int_${slug}`)}
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="tiny muted" style={{ margin: 0 }}>
+            {t(lang, "int_selected", { n: interests.size })}
+          </p>
+
+          {err && (
+            <p className="status-note error-note" style={{ margin: 0 }} role="alert">
+              {err}
+            </p>
+          )}
+
+          <div className="row">
+            <button className="btn btn-primary" onClick={finish} disabled={busy}>
+              {busy ? t(lang, "pub_submitting") : t(lang, "ob_finish")}
+            </button>
+            <button className="btn btn-ghost" onClick={() => setStage("step_identity")} disabled={busy}>
+              {t(lang, "common_back")}
+            </button>
+            <button className="btn btn-ghost" onClick={finish} disabled={busy}>
+              {t(lang, "int_skip")}
             </button>
           </div>
         </div>

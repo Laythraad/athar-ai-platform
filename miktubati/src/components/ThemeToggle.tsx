@@ -57,7 +57,8 @@ export default function ThemeToggle({ lang }: { lang: Lang }) {
   const mode = useSyncExternalStore(subscribe, read, getServerSnapshot);
 
   function cycle() {
-    const next = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+    const idx = MODES.indexOf(mode);
+    const next = MODES[(idx + 1) % MODES.length] ?? "auto";
     cached = next;
     localStorage.setItem(KEY, next);
     applyToDom(next);

@@ -155,7 +155,7 @@ export default async function HeritageDetail({
                 <span>{bl(lang, site.era)}</span>
               </div>
             )}
-            {related.length > 0 && (
+            {related.length > 0 && related[0] && (
               <div className="kv">
                 <span>{t(lang, "her_nearby")}</span>
                 <span>{Math.round(related[0].d)} km · {bl(lang, related[0].o.name)}</span>

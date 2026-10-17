@@ -69,7 +69,8 @@ export async function audit(params: {
     const meta: Record<string, unknown> = {};
     if (params.before !== undefined) meta.before = params.before;
     if (params.after !== undefined) meta.after = params.after;
-    await admin.from("audit_log").insert({
+    // supabase-js returns { error } — it does not throw, so check it.
+    const { error } = await admin.from("audit_log").insert({
       actor_id: params.actorId,
       action: params.action,
       target_type: params.targetType,
@@ -77,8 +78,12 @@ export async function audit(params: {
       reason: params.reason ?? null,
       meta,
     });
-  } catch {
+    if (error) {
+      console.error("[audit] insert failed:", error.message);
+    }
+  } catch (e) {
     // auditing is best-effort; the action itself already succeeded
+    console.error("[audit] unexpected throw:", e);
   }
 }
 
@@ -96,7 +101,7 @@ export async function recordModeration(params: {
   const admin = adminSupabase();
   if (!admin) return;
   try {
-    await admin.from("moderation_events").insert({
+    const { error } = await admin.from("moderation_events").insert({
       target_type: "work",
       target_id: params.workId,
       verdict: params.verdict,
@@ -107,8 +112,11 @@ export async function recordModeration(params: {
       confidence: params.confidence ?? null,
       actor_id: params.actorId,
     });
-  } catch {
-    // best-effort
+    if (error) {
+      console.error("[moderation] insert failed:", error.message);
+    }
+  } catch (e) {
+    console.error("[moderation] unexpected throw:", e);
   }
 }
 

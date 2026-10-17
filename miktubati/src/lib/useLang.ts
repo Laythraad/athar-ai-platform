@@ -1,12 +1,13 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { type Lang } from "@/lib/i18n";
+import { type Lang, isLang } from "@/lib/i18n";
 
 function readCookie(): Lang {
   if (typeof document === "undefined") return "ar";
-  const match = document.cookie.match(/(?:^|;\s*)mkt_lang=(ar|en)\b/);
-  return match ? (match[1] as Lang) : "ar";
+  const match = document.cookie.match(/(?:^|;\s*)mkt_lang=([a-z]{2})\b/);
+  if (match && isLang(match[1])) return match[1];
+  return "ar";
 }
 
 function subscribe(): () => void {
